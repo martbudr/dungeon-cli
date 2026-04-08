@@ -14,11 +14,11 @@ class SelectionHandler : InputHandler
         switch (key)
         {
             case ConsoleKey.UpArrow:
-                player.selectedItem = Math.Max(player.selectedItem - 1, 0);
+                player.SelectedItem = Math.Max(player.SelectedItem - 1, 0);
                 return true;
 
             case ConsoleKey.DownArrow:
-                player.selectedItem = Math.Min(player.selectedItem + 1, 9);
+                player.SelectedItem = Math.Min(player.SelectedItem + 1, 9);
                 return true;
         }
 

@@ -22,6 +22,7 @@ class StandardDungeonStrategy : DungeonStrategy
         // Rozmieszczamy przedmioty i broń
         builder.AddItems(5);
         builder.AddWeapons(10);
+        builder.AddEnemies(5);
     }
 }
 
@@ -48,6 +49,9 @@ class DenseDungeonStrategy : DungeonStrategy
 
         // Więcej broni
         builder.AddWeapons(8);
+        
+        // Przeciwnicy
+        builder.AddEnemies(5);
     }
 }
 
@@ -70,6 +74,7 @@ class MazeDungeonStrategy : DungeonStrategy
         builder.AddRooms(3, 3);
         builder.AddItems(10);
         builder.AddWeapons(5);
+        builder.AddEnemies(5);
     }
 
     private void GenerateMaze(Board board)
@@ -90,7 +95,7 @@ class MazeDungeonStrategy : DungeonStrategy
     private void Carve(int x, int y, Board board, bool[,] visited)
     {
         visited[x, y] = true;
-        board.grid[x, y] = GlobalConstants.EMPTY;
+        board.Grid[x, y] = GlobalConstants.EMPTY;
 
         int[][] directions =
         {
@@ -117,7 +122,7 @@ class MazeDungeonStrategy : DungeonStrategy
             int wallX = x + d[0] / 2;
             int wallY = y + d[1] / 2;
 
-            board.grid[wallX, wallY] = GlobalConstants.EMPTY;
+            board.Grid[wallX, wallY] = GlobalConstants.EMPTY;
 
             Carve(nx, ny, board, visited);
         }
@@ -125,8 +130,8 @@ class MazeDungeonStrategy : DungeonStrategy
 
     private void OpenStartArea(Board board)
     {
-        board.grid[0, 0] = GlobalConstants.EMPTY;
-        board.grid[0, 1] = GlobalConstants.EMPTY;
-        board.grid[1, 0] = GlobalConstants.EMPTY;
+        board.Grid[0, 0] = GlobalConstants.EMPTY;
+        board.Grid[0, 1] = GlobalConstants.EMPTY;
+        board.Grid[1, 0] = GlobalConstants.EMPTY;
     }
 }

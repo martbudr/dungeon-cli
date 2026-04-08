@@ -14,10 +14,10 @@ class EquipmentHandler : InputHandler
         switch (key)
         {
             case ConsoleKey.D1:
-                player.Equip(player.selectedItem, true);
+                player.Equip(player.SelectedItem, true);
                 return true;
             case ConsoleKey.D2:
-                player.Equip(player.selectedItem, false);
+                player.Equip(player.SelectedItem, false);
                 return true;
             case ConsoleKey.L:
                 player.Unequip(true);

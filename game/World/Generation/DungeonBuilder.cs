@@ -1,4 +1,6 @@
 using System;
+using Game.Effects;
+using Game.EquipStrategies;
 
 namespace Game;
 
@@ -12,40 +14,39 @@ class DungeonBuilder
         this.board = board;
     }
 
-    // Procedura: pusty loch
-    public void EmptyDungeon()
+    private void FillBoard(char symbol)
     {
         for (int i = 0; i < GlobalConstants.HEIGHT; i++)
         for (int j = 0; j < GlobalConstants.WIDTH; j++)
-            board.grid[i, j] = GlobalConstants.EMPTY;
+            board.Grid[i, j] = symbol;
     }
 
-    // Procedura: wypełniony loch
-    public void FilledDungeon()
+    public void EmptyDungeon() => FillBoard(GlobalConstants.EMPTY);
+    public void FilledDungeon() => FillBoard(GlobalConstants.WALL);
+
+    // Dodawanie korytarza w określonym miejscu
+    private void CreateCorridorAt(int i, int j, int di, int dj, int length)
     {
-        for (int i = 0; i < GlobalConstants.HEIGHT; i++)
-        for (int j = 0; j < GlobalConstants.WIDTH; j++)
-            board.grid[i, j] = GlobalConstants.WALL;
+        for (int k = 0; k < length; k++)
+        {
+            int ni = i + di * k;
+            int nj = j + dj * k;
+            if (ni <= 0 || ni >= GlobalConstants.HEIGHT - 1 ||
+                nj <= 0 || nj >= GlobalConstants.WIDTH - 1) break;
+            board.Grid[ni, nj] = GlobalConstants.EMPTY;
+        }
     }
 
-    // Procedura: dodawanie losowych korytarzy
+    // Dodawanie losowych korytarzy
     public void AddCorridors(int count = 10)
     {
         for (int n = 0; n < count; n++)
         {
-            const int maxRow = GlobalConstants.HEIGHT - 1;
-            const int maxCol = GlobalConstants.WIDTH - 1;
-
-            var i = rng.Next(1, maxRow);
-            var j = rng.Next(1, maxCol);
-
-            var length = rng.Next(2, 6); // długość korytarza (min 2)
-
-            var dir = rng.Next(4); // 0=up,1=down,2=left,3=right
-
-            var di = 0;
-            var dj = 0;
-
+            int i = rng.Next(1, GlobalConstants.HEIGHT - 1);
+            int j = rng.Next(1, GlobalConstants.WIDTH - 1);
+            int length = rng.Next(2, 6);
+            int dir = rng.Next(4);
+            int di = 0, dj = 0;
             switch (dir)
             {
                 case 0: di = -1; break;
@@ -53,55 +54,54 @@ class DungeonBuilder
                 case 2: dj = -1; break;
                 case 3: dj = 1; break;
             }
-
-            for (int k = 0; k < length; k++)
-            {
-                int ni = i + di * k;
-                int nj = j + dj * k;
-
-                if (ni <= 0 || ni >= GlobalConstants.HEIGHT - 1 ||
-                    nj <= 0 || nj >= GlobalConstants.WIDTH - 1)
-                    break;
-
-                board.grid[ni, nj] = GlobalConstants.EMPTY;
-            }
+            CreateCorridorAt(i, j, di, dj, length);
         }
     }
 
     // Procedura: dodawanie losowych komnat (pustych kwadratów)
-    public void AddRooms(int roomCount = 5, int roomSize = 1)
+    private void DrawRectangle(int startRow, int startCol, int height, int width)
     {
-        for (var n = 0; n < roomCount; n++)
-        {
-            // Limit startRow/startCol żeby pokoje nie wychodziły poza granice
-            int maxRowStart = Math.Max(1, GlobalConstants.HEIGHT - roomSize - 1);
-            int maxColStart = Math.Max(1, GlobalConstants.WIDTH - roomSize - 1);
-
-            int startRow = rng.Next(1, maxRowStart + 1); // inclusive
-            int startCol = rng.Next(1, maxColStart + 1);
-
-            // Rysujemy pokój w obrębie bezpiecznych granic
-            for (int i = startRow; i < startRow + roomSize && i < GlobalConstants.HEIGHT - 1; i++)
-            for (int j = startCol; j < startCol + roomSize && j < GlobalConstants.WIDTH - 1; j++)
-                board.grid[i, j] = GlobalConstants.EMPTY;
-        }
+        for (int i = startRow; i < startRow + height && i < GlobalConstants.HEIGHT - 1; i++)
+        for (int j = startCol; j < startCol + width && j < GlobalConstants.WIDTH - 1; j++)
+            board.Grid[i, j] = GlobalConstants.EMPTY;
     }
 
-    // Procedura: dodawanie centralnej sali
+    // Dodawanie centralnej sali
     public void AddCentralHall(int hallHeight = 5, int hallWidth = 7)
     {
         int startRow = (GlobalConstants.HEIGHT - hallHeight) / 2;
         int startCol = (GlobalConstants.WIDTH - hallWidth) / 2;
+        DrawRectangle(startRow, startCol, hallHeight, hallWidth);
+    }
 
-        for (int i = startRow; i < startRow + hallHeight; i++)
-        for (int j = startCol; j < startCol + hallWidth; j++)
-            board.grid[i, j] = GlobalConstants.EMPTY;
+    // Dodawanie losowych pokoi
+    public void AddRooms(int roomCount = 5, int roomSize = 1)
+    {
+        for (int n = 0; n < roomCount; n++)
+        {
+            int maxRow = Math.Max(1, GlobalConstants.HEIGHT - roomSize - 1);
+            int maxCol = Math.Max(1, GlobalConstants.WIDTH - roomSize - 1);
+            int startRow = rng.Next(1, maxRow + 1);
+            int startCol = rng.Next(1, maxCol + 1);
+            DrawRectangle(startRow, startCol, roomSize, roomSize);
+        }
+    }
+    
+    private IItem ApplyRandomEffects(IItem item)
+    {
+        if (rng.NextDouble() < 0.4)
+            item = new StrongEffect(item);
+
+        if (rng.NextDouble() < 0.3)
+            item = new UnluckyEffect(item);
+
+        return item;
     }
 
     // Procedura: dodawanie przedmiotów
     public int AddItems(int totalItems = 10)
     {
-        var simpleItems = new Func<Item>[] {
+        var simpleItems = new Func<IItem>[] {
             () => new SimpleItem("Stone", 'O'),
             () => new SimpleItem("Book", 'B'),
             () => new SimpleItem("Key", 'K')
@@ -113,10 +113,13 @@ class DungeonBuilder
             int i = rng.Next(1, GlobalConstants.HEIGHT - 1);
             int j = rng.Next(1, GlobalConstants.WIDTH - 1);
 
-            if (board.grid[i, j] == GlobalConstants.EMPTY)
+            if (board.Grid[i, j] == GlobalConstants.EMPTY)
             {
                 var itemFactory = simpleItems[rng.Next(simpleItems.Length)];
-                board.items[i, j].Add(itemFactory());
+
+                IItem item = ApplyRandomEffects(itemFactory());
+
+                board.Items[i, j].Add(item);
                 added++;
             }
         }
@@ -127,7 +130,7 @@ class DungeonBuilder
         {
             for (int j = 0; j < GlobalConstants.WIDTH; j++)
             {
-                totalOnBoard += board.items[i, j].Count;
+                totalOnBoard += board.Items[i, j].Count;
             }
         }
 
@@ -137,10 +140,28 @@ class DungeonBuilder
     // Procedura: dodawanie broni
     public void AddWeapons(int totalWeapons = 5)
     {
-        var weapons = new Func<Item>[] {
-            () => new OneHandedWeapon("Sword", 'S', 10),
-            () => new OneHandedWeapon("Axe", 'A', 15),
-            () => new TwoHandedWeapon("Greatsword", 'G', 25)
+        var weaponFactories = new Func<Weapon>[] 
+        {
+            () => new Weapon(
+                name: "Sword",
+                symbol: 'S',
+                weaponType: new LightWeaponType(),
+                equipStrategy: new OneHandedEquipStrategy()
+            ),
+
+            () => new Weapon(
+                name: "Axe",
+                symbol: 'A',
+                weaponType: new HeavyWeaponType(),
+                equipStrategy: new OneHandedEquipStrategy()
+            ),
+
+            () => new Weapon(
+                name: "Greatsword",
+                symbol: 'G',
+                weaponType: new HeavyWeaponType(),
+                equipStrategy: new TwoHandedEquipStrategy()
+            )
         };
 
         int added = 0;
@@ -149,12 +170,50 @@ class DungeonBuilder
             int i = rng.Next(1, GlobalConstants.HEIGHT - 1);
             int j = rng.Next(1, GlobalConstants.WIDTH - 1);
 
-            if (board.grid[i, j] == GlobalConstants.EMPTY)
+            if (board.Grid[i, j] == GlobalConstants.EMPTY)
             {
-                var weaponFactory = weapons[rng.Next(weapons.Length)];
-                board.items[i, j].Add(weaponFactory());
+                var weaponFactory = weaponFactories[rng.Next(weaponFactories.Length)];
+                IItem item = ApplyRandomEffects(weaponFactory());
+                board.Items[i, j].Add(item);
                 added++;
             }
+        }
+    }
+    
+    public void AddEnemies(int totalEnemies = 5)
+    {
+        // Tablica fabryk przeciwników
+        var enemyFactories = new Func<Enemy>[]
+        {
+            () => new Enemy(name: "Goblin", health: 20, attack: 15, armor: 2),
+            () => new Enemy(name: "Orc", health: 30, attack: 17, armor: 3),
+            () => new Enemy(name: "Troll", health: 50, attack: 20, armor: 5)
+        };
+
+        int added = 0;
+        int maxAttempts = totalEnemies * 10; // zabezpieczenie przed nieskończoną pętlą
+        int attempts = 0;
+
+        while (added < totalEnemies && attempts < maxAttempts)
+        {
+            attempts++;
+
+            int i = rng.Next(1, GlobalConstants.HEIGHT - 1);
+            int j = rng.Next(1, GlobalConstants.WIDTH - 1);
+
+            // Sprawdzenie, czy pole jest puste i nie ma już wroga
+            if (board.Grid[i, j] != GlobalConstants.EMPTY || board.Enemies[i, j] != null)
+                continue;
+
+            var enemyFactory = enemyFactories[rng.Next(enemyFactories.Length)];
+            board.PlaceEnemy(i, j, enemyFactory());
+
+            added++;
+        }
+
+        if (added < totalEnemies)
+        {
+            Console.WriteLine($"Warning: Only placed {added} enemies out of requested {totalEnemies}. Not enough empty spaces."); // TODO
         }
     }
 }

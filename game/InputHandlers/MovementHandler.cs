@@ -1,3 +1,6 @@
+using game.Combat;
+using Game.Combat;
+
 namespace Game.InputHandlers;
 
 class MovementHandler : InputHandler
@@ -13,22 +16,19 @@ class MovementHandler : InputHandler
 
     public override bool Handle(ConsoleKey key)
     {
+        int dx = 0, dy = 0;
+        
         switch (key)
         {
-            case ConsoleKey.W:
-                player.Move(-1, 0, board.grid);
-                return true;
-            case ConsoleKey.S:
-                player.Move(1, 0, board.grid);
-                return true;
-            case ConsoleKey.A:
-                player.Move(0, -1, board.grid);
-                return true;
-            case ConsoleKey.D:
-                player.Move(0, 1, board.grid);
-                return true;
+            case ConsoleKey.W: dx = -1; break;
+            case ConsoleKey.S: dx = 1; break;
+            case ConsoleKey.A: dy = -1; break;
+            case ConsoleKey.D: dy = 1; break;
+            default: return base.Handle(key);
         }
+        
+        player.Move(dx, dy, board.Grid);
 
-        return base.Handle(key);
+        return true;
     }
 }

@@ -15,7 +15,7 @@ class PickupHandler : InputHandler
     {
         if (key == ConsoleKey.E)
         {
-            var cell = board.items[player.X, player.Y];
+            var cell = board.Items[player.X, player.Y];
             if (cell.Count > 0)
             {
                 player.AddItem(cell[0]);

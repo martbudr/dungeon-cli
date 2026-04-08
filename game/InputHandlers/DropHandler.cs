@@ -15,7 +15,7 @@ class DropHandler : InputHandler
     {
         if (key == ConsoleKey.Q)
         {
-            player.Drop(player.selectedItem, board.items);
+            player.Drop(player.SelectedItem, board.Items);
             return true;
         }
 

@@ -43,7 +43,8 @@ class Game : IMessageService
             .SetNext(new PickupHandler(player, board))
             .SetNext(new EquipmentHandler(player))
             .SetNext(new DropHandler(player, board))
-            .SetNext(new SelectionHandler(player));
+            .SetNext(new SelectionHandler(player))
+            .SetNext(new AttackHandler(player, board));
     }
 
     public void Run()
@@ -55,10 +56,17 @@ class Game : IMessageService
             tutorialInstructions = tutorial.GenerateInstructions();
             
             renderer.Draw(board, player, tutorialInstructions, lastMessage);
-
+            
             var key = Console.ReadKey(true).Key;
             HandleInput(key);
             
+            // Sprawdzenie, czy gracz żyje
+            if (!player.IsAlive)
+            {
+                renderer.DrawGameOver();
+                shouldExit = true;
+                break;
+            }
         }
     }
 
