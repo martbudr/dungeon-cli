@@ -33,15 +33,6 @@ public class Player
         _ => 0
     };
     
-    // public List<IItem?> GetEquippedItems()
-    // {
-    //     return new List<IItem?>
-    //     {
-    //         LeftHandItem?.BaseItem,
-    //         RightHandItem?.BaseItem
-    //     };
-    // }
-    
     public int BaseStrength = 5;
     public int BaseDexterity = 5;
     public int BaseLuck = 5;
@@ -54,8 +45,17 @@ public class Player
 
         void Apply(IEquippable item)
         {
-            if (item is IStatModifier mod)
+            if (item == null) return;
+
+            if (item is ItemEffectDecorator dec)
+            {
+                foreach (var mod in dec.GetAllModifiers())
+                    bonus += selector(mod);
+            }
+            else if (item is IStatModifier mod)
+            {
                 bonus += selector(mod);
+            }
         }
 
         Apply(LeftHandItem);
@@ -77,7 +77,7 @@ public class Player
     
     public bool IsAlive { get; private set; } = true;
 
-    public List<IItem> Inventory = new List<IItem>();
+    public List<IItem> Inventory = [];
     public int SelectedItem = 0;
     public IEquippable LeftHandItem { get; set; }
 

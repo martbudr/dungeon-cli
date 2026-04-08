@@ -6,7 +6,7 @@ public class StrongEffect : ItemEffectDecorator, IStatModifier
 {
     private readonly int bonusDamage;
 
-    public StrongEffect(IItem item, int bonusDamage = 5) : base(item)
+    public StrongEffect(IEquippable item, int bonusDamage = 5) : base(item)
     {
         this.bonusDamage = bonusDamage;
     }

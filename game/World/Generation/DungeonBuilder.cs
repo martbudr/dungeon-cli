@@ -89,13 +89,16 @@ class DungeonBuilder
     
     private IItem ApplyRandomEffects(IItem item)
     {
+        if (item is not IEquippable eq)
+            return item;
+
         if (rng.NextDouble() < 0.4)
-            item = new StrongEffect(item);
+            eq = new StrongEffect(eq);
 
         if (rng.NextDouble() < 0.3)
-            item = new UnluckyEffect(item);
+            eq = new LuckyEffect(eq);
 
-        return item;
+        return eq;
     }
 
     // Procedura: dodawanie przedmiotów

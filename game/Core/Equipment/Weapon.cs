@@ -3,7 +3,7 @@ using Game.EquipStrategies;
 
 namespace Game;
 
-public class Weapon : IItem, IEquippable
+public class Weapon : IEquippable
 {
     public string Name { get; }
     public char Symbol { get; }
