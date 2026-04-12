@@ -17,28 +17,28 @@ public class GameRenderer
     {
         Console.SetCursorPosition(0, 0);
 
-        // 1️⃣ Rysowanie planszy (lewa kolumna)
+        // Rysowanie planszy (lewa kolumna)
         _boardRenderer.Draw(board, player);
 
         int middleX = GlobalConstants.WIDTH + BoardPadding;
         int rightX = middleX + ColumnWidth;
 
-        // 2️⃣ Środkowa kolumna → teraz ATTRIBUTES + staty
+        // Środkowa kolumna → teraz ATTRIBUTES + staty
         var statsPanel = new UIPanel(middleX, 0, ColumnWidth);
         _statsRenderer.Render(statsPanel, player);
 
-        // 3️⃣ Prawa kolumna → TARGET + EQUIPPED
+        // Prawa kolumna → TARGET + EQUIPPED
         var detailsPanel = new UIPanel(rightX, 0, middleX);
-        _detailsRenderer.Render(detailsPanel, board, player);
+        _detailsRenderer.Render(detailsPanel, player);
 
-        // 4️⃣ Dalsza prawa kolumna → INVENTORY
+        // Dalsza prawa kolumna → INVENTORY
         var invPanel = new UIPanel(rightX + MiddleWidth, 0, MiddleWidth);
         _inventoryRenderer.Render(invPanel, board, player);
 
-        // 5️⃣ Wiadomość
+        // Wiadomość
         _messageRenderer.Render(lastMessage, GlobalConstants.HEIGHT + 1);
 
-        // 6️⃣ Tutorial
+        // Tutorial
         var tutorialPanel = new UIPanel(0, GlobalConstants.HEIGHT + 3, Console.WindowWidth - 1);
         _tutorialRenderer.Render(tutorialPanel, tutorialInstructions);
     }

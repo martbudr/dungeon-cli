@@ -39,31 +39,6 @@ public class Player
     public int BaseAggression = 5;
     public int BaseWisdom = 5;
     
-    private int GetBonus(Func<IStatModifier, int> selector)
-    {
-        int bonus = 0;
-
-        void Apply(IEquippable item)
-        {
-            if (item == null) return;
-
-            if (item is ItemEffectDecorator dec)
-            {
-                foreach (var mod in dec.GetAllModifiers())
-                    bonus += selector(mod);
-            }
-            else if (item is IStatModifier mod)
-            {
-                bonus += selector(mod);
-            }
-        }
-
-        Apply(LeftHandItem);
-        Apply(RightHandItem);
-
-        return bonus;
-    }
-    
     public int Strength => BaseStrength + GetBonus(m => m.Strength);
     public int Dexterity => BaseDexterity + GetBonus(m => m.Dexterity);
     public int Luck => BaseLuck + GetBonus(m => m.Luck);
@@ -79,11 +54,45 @@ public class Player
 
     public List<IItem> Inventory = [];
     public int SelectedItem = 0;
-    public IEquippable LeftHandItem { get; set; }
+    public IItem? LeftHandItem { get; set; }
 
-    public IEquippable RightHandItem { get; set; }
+    public IItem? RightHandItem { get; set; }
 
     public const int MaxInventorySlots = 10;
+    
+    private int GetBonus(Func<IStatModifier, int> selector)
+    {
+        // Jeśli w obu rękach jest to samo (broń dwuręczna), licz tylko raz
+        if (LeftHandItem != null && LeftHandItem == RightHandItem)
+        {
+            return CalculateItemBonus(LeftHandItem, selector);
+        }
+
+        return CalculateItemBonus(LeftHandItem, selector) + 
+               CalculateItemBonus(RightHandItem, selector);
+    }
+
+    private int CalculateItemBonus(IItem? item, Func<IStatModifier, int> selector)
+    {
+        if (item == null) return 0;
+        int sum = 0;
+
+        // Jeśli przedmiot to dekorator, wyciągnij wszystkie ukryte modyfikatory
+        if (item is ItemEffectDecorator decorator)
+        {
+            foreach (var mod in decorator.GetAllModifiers())
+            {
+                sum += selector(mod);
+            }
+        }
+        // Jeśli to "goły" przedmiot (np. miecz bez efektów), ale sam implementuje IStatModifier
+        else if (item is IStatModifier mod)
+        {
+            sum += selector(mod);
+        }
+
+        return sum;
+    }
 
     private readonly IMessageService messageService;
 
@@ -139,28 +148,43 @@ public class Player
     public void Equip(int index, bool left)
     {
         if (index < 0 || index >= Inventory.Count) return;
-        
-        if (Inventory[index] is IEquippable equipable)
+        IItem fullItem = Inventory[index];
+
+        if (fullItem is IEquippable equippable && equippable.EquipStrategy != null)
         {
-            equipable.Equip(this, left);
-            Inventory.RemoveAt(index);  
+            equippable.Equip(this, left);
+        
+            // Jeśli po wywołaniu Equip przedmiot faktycznie trafił do ręki (strategia zadziałała)
+            if (left && LeftHandItem == fullItem || !left && RightHandItem == fullItem)
+            {
+                Inventory.RemoveAt(index);
+                messageService.ShowMessage($"Equipped {fullItem.Name}");
+            }
         }
         else
         {
-            // item nie jest ekwipowalny – nic nie rób lub wypisz komunikat
             messageService.ShowMessage("This item cannot be equipped.");
         }
     }
 
     public void Unequip(bool left)
     {
-        var handItem = left ? LeftHandItem : RightHandItem;
-        if (handItem == null) return;
+        IItem? item = left ? LeftHandItem : RightHandItem;
+        if (item == null) return;
 
-        if (handItem is IEquippable equippable)
+        if (item is IEquippable equippable)
         {
-            equippable.Unequip(this, left); // this = Player
+            // Strategia wyczyści sloty w Playerze
+            equippable.Unequip(this, left);
         }
+        else
+        {
+            // Failsafe dla przedmiotów bez strategii
+            if (left) LeftHandItem = null; else RightHandItem = null;
+        }
+
+        // ZAWSZE dodajemy z powrotem to, co wyciągnęliśmy ze slotu
+        Inventory.Add(item);
     }
 
     public void Drop(int index, List<IItem>[,] items)
@@ -175,12 +199,12 @@ public class Player
     public void TakeDamage(int baseDamage, IAttackHandler? attack = null)
     {
         // Oblicz defensywne bonusy z broni
-        int defenseFromLeft = LeftHandItem is Weapon leftWeapon && attack != null
-            ? leftWeapon.Calculate(this, attack).Defense
+        int defenseFromLeft = LeftHandItem is IItem leftItem && attack != null
+            ? leftItem.Calculate(this, attack).Defense
             : 0;
 
-        int defenseFromRight = RightHandItem is Weapon rightWeapon && attack != null
-            ? rightWeapon.Calculate(this, attack).Defense
+        int defenseFromRight = RightHandItem is IItem rightItem && attack != null
+            ? rightItem.Calculate(this, attack).Defense
             : 0;
 
         // Statystyki gracza mogą też wpływać na obronę

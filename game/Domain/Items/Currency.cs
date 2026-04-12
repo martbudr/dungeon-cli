@@ -18,9 +18,7 @@ public class Currency : IItem
         this.type = type;
         this.value = value;
     }
-
-    public bool IsCurrency => true;
-
+    
     public CurrencyType CurrencyType => type;
     public int GetValue() => value;
     

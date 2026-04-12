@@ -1,6 +1,6 @@
 namespace Game;
 
-public interface IEquippable : IItem
+public interface IEquippable
 {
     IEquipStrategy? EquipStrategy { get; }
     void Equip(Player player, bool left);

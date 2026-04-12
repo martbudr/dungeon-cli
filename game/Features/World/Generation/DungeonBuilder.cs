@@ -1,4 +1,3 @@
-using System;
 using Game.Effects;
 using Game.EquipStrategies;
 
@@ -89,16 +88,27 @@ class DungeonBuilder
     
     private IItem ApplyRandomEffects(IItem item)
     {
-        if (item is not IEquippable eq)
-            return item;
+        // 1. Zaczynamy od bazowego przedmiotu
+        IItem result = item;
 
+        // 2. Jeśli przedmiot nie jest zakładalny, nie dodajemy efektów bojowych/statystyk
+        if (result is not IEquippable)
+            return result;
+
+        // 3. Nakładamy efekty. Każdy dekorator przyjmuje IItem i sam jest IItem.
         if (rng.NextDouble() < 0.4)
-            eq = new StrongEffect(eq);
+        {
+            result = new StrongEffect(result);
+        }
 
         if (rng.NextDouble() < 0.3)
-            eq = new LuckyEffect(eq);
+        {
+            result = new LuckyEffect(result);
+        }
 
-        return eq;
+        // Zwracamy "opakowany" przedmiot. 
+        // Jeśli wpadł w oba IFy, to result jest typu LuckyEffect(StrongEffect(Weapon)).
+        return result;
     }
 
     // Procedura: dodawanie przedmiotów

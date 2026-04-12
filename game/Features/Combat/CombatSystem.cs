@@ -21,14 +21,14 @@ public static class CombatSystem
         int playerDamage = 0;
 
         // Lewa ręka
-        Weapon? leftWeapon = player.LeftHandItem as Weapon;
+        var leftWeapon = player.LeftHandItem;
         if (leftWeapon != null)
         {
             playerDamage += leftWeapon.Calculate(player, attack).Damage;
         }
 
         // Prawa ręka, tylko jeśli to inna broń niż w lewej ręce
-        Weapon? rightWeapon = player.RightHandItem as Weapon;
+        var rightWeapon = player.RightHandItem;
         if (rightWeapon != null && rightWeapon != leftWeapon)
         {
             playerDamage += rightWeapon.Calculate(player, attack).Damage;

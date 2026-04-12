@@ -1,40 +1,35 @@
 using Game.Combat;
-using Game.EquipStrategies;
 
 namespace Game;
 
-public class SimpleItem : IItem, IEquippable
+public class Weapon : IItem, IEquippable
 {
     public string Name { get; }
     public char Symbol { get; }
-    public bool IsCurrency { get; } = false;
 
+    
     public IItem BaseItem => this;
     private readonly IWeaponType weaponType;
     public IEquipStrategy EquipStrategy { get; }
 
-    public SimpleItem(
+    public Weapon(
         string name,
         char symbol,
-        IWeaponType weaponType = null,
-        IEquipStrategy equipStrategy = null)
+        IWeaponType weaponType,
+        IEquipStrategy equipStrategy)
     {
         Name = name;
         Symbol = symbol;
-        this.weaponType = weaponType ?? new NoWeaponType();
-        this.EquipStrategy = equipStrategy ?? new OneHandedEquipStrategy();
+        this.weaponType = weaponType;
+        EquipStrategy = equipStrategy;
     }
     
     public AttackResult Calculate(Player player, IAttackHandler attack)
         => weaponType.ResolveAttack(attack, player);
-
+    
     public void Equip(Player player, bool left)
-    {
-        EquipStrategy.Equip(player, this, left);
-    }
+        => EquipStrategy.Equip(player, this, left);
 
     public void Unequip(Player player, bool left)
-    {
-        EquipStrategy.Unequip(player, this, left);
-    }
+        => EquipStrategy.Unequip(player, this, left);
 }
