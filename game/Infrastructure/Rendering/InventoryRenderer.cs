@@ -30,7 +30,7 @@ public class InventoryRenderer
         p.SkipLine();
         p.WriteTitle("INVENTORY");
 
-        for (int i = 0; i < Player.MaxInventorySlots; i++)
+        for (int i = 0; i < EquipmentManager.MaxInventorySlots; i++)
         {
             string prefix = i == player.SelectedItem ? "> " : "  ";
             string name = i < player.Inventory.Count ? player.Inventory[i].Name : "---";

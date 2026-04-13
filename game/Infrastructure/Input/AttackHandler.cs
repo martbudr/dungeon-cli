@@ -1,5 +1,6 @@
 using game.Combat;
 using Game.Combat;
+using Game.Services;
 
 namespace Game.InputHandlers;
 
@@ -7,14 +8,16 @@ class AttackHandler : InputHandler
 {
     private Player player;
     private Board board;
+    private IMessageService logger;
 
     // Czy jesteśmy w trybie oczekiwania na wybór ataku
     private bool waitingForAttackKey = false;
 
-    public AttackHandler(Player player, Board board)
+    public AttackHandler(Player player, Board board, IMessageService logger)
     {
         this.player = player;
         this.board = board;
+        this.logger = logger;
     }
 
     public override bool Handle(ConsoleKey key)
@@ -24,7 +27,6 @@ class AttackHandler : InputHandler
             if (key == ConsoleKey.H) // klawisz inicjujący atak
             {
                 waitingForAttackKey = true;
-                player.ShowMessage("Choose attack: N = normal, K = sneak, M = magic");
                 return true;
             }
 
@@ -45,17 +47,12 @@ class AttackHandler : InputHandler
             Enemy? enemy = board.GetEnemyAt(player.X, player.Y);
             if (enemy != null)
             {
-                var result = CombatSystem.SingleTurn(player, enemy, attack);
+                var result = CombatSystem.SingleTurn(player, enemy, attack, logger);
 
                 if (result == CombatResult.EnemyDied)
                 {
                     board.Enemies[player.X, player.Y] = null;
                     player.ShowMessage("Enemy defeated!");
-                }
-
-                if (result == CombatResult.PlayerDied)
-                {
-                    player.Kill();
                 }
             }
 

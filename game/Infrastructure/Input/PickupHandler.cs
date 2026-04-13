@@ -19,6 +19,7 @@ class PickupHandler : InputHandler
             if (cell.Count > 0)
             {
                 player.AddItem(cell[0]);
+                player.ShowMessage($"You equipped the {cell[0].Name}.");
                 cell.RemoveAt(0);
             }
             return true;

@@ -5,67 +5,131 @@ namespace Game;
 
 class DungeonBuilder
 {
-    private readonly Board board;
-    private readonly Random rng = new();
+    private readonly Board _board;
+    private readonly Random _rng = new();
 
     public DungeonBuilder(Board board)
     {
-        this.board = board;
+        _board = board;
     }
+
+    // --- PODSTAWOWE OPERACJE NA SIATCE ---
 
     private void FillBoard(char symbol)
     {
         for (int i = 0; i < GlobalConstants.HEIGHT; i++)
         for (int j = 0; j < GlobalConstants.WIDTH; j++)
-            board.Grid[i, j] = symbol;
+            _board.Grid[i, j] = symbol;
     }
 
     public void EmptyDungeon() => FillBoard(GlobalConstants.EMPTY);
     public void FilledDungeon() => FillBoard(GlobalConstants.WALL);
 
-    // Dodawanie korytarza w określonym miejscu
-    private void CreateCorridorAt(int i, int j, int di, int dj, int length)
-    {
-        for (int k = 0; k < length; k++)
-        {
-            int ni = i + di * k;
-            int nj = j + dj * k;
-            if (ni <= 0 || ni >= GlobalConstants.HEIGHT - 1 ||
-                nj <= 0 || nj >= GlobalConstants.WIDTH - 1) break;
-            board.Grid[ni, nj] = GlobalConstants.EMPTY;
-        }
-    }
-
-    // Dodawanie losowych korytarzy
-    public void AddCorridors(int count = 10)
-    {
-        for (int n = 0; n < count; n++)
-        {
-            int i = rng.Next(1, GlobalConstants.HEIGHT - 1);
-            int j = rng.Next(1, GlobalConstants.WIDTH - 1);
-            int length = rng.Next(2, 6);
-            int dir = rng.Next(4);
-            int di = 0, dj = 0;
-            switch (dir)
-            {
-                case 0: di = -1; break;
-                case 1: di = 1; break;
-                case 2: dj = -1; break;
-                case 3: dj = 1; break;
-            }
-            CreateCorridorAt(i, j, di, dj, length);
-        }
-    }
-
-    // Procedura: dodawanie losowych komnat (pustych kwadratów)
     private void DrawRectangle(int startRow, int startCol, int height, int width)
     {
         for (int i = startRow; i < startRow + height && i < GlobalConstants.HEIGHT - 1; i++)
         for (int j = startCol; j < startCol + width && j < GlobalConstants.WIDTH - 1; j++)
-            board.Grid[i, j] = GlobalConstants.EMPTY;
+            _board.Grid[i, j] = GlobalConstants.EMPTY;
     }
 
-    // Dodawanie centralnej sali
+    // --- ALGORYTMY GENEROWANIA STRUKTURY ---
+
+    public void DigTunnels(int tunnelCount, int maxLength)
+    {
+        // Zaczynamy od środka
+        int curI = GlobalConstants.HEIGHT / 2;
+        int curJ = GlobalConstants.WIDTH / 2;
+
+        for (int n = 0; n < tunnelCount; n++)
+        {
+            // Wybieramy kierunek (Góra, Dół, Lewo, Prawo)
+            int di = _rng.Next(-1, 2);
+            int dj = (di == 0) ? (_rng.Next(0, 2) == 0 ? -1 : 1) : 0;
+
+            int length = _rng.Next(5, maxLength);
+            for (int l = 0; l < length; l++)
+            {
+                // Przesuwamy się
+                int nextI = curI + di;
+                int nextJ = curJ + dj;
+
+                // Sprawdzamy granice (z marginesem na ściany zewnętrzne)
+                if (nextI > 0 && nextI < GlobalConstants.HEIGHT - 1 &&
+                    nextJ > 0 && nextJ < GlobalConstants.WIDTH - 1)
+                {
+                    curI = nextI;
+                    curJ = nextJ;
+                    _board.Grid[curI, curJ] = GlobalConstants.EMPTY;
+                }
+                else
+                {
+                    // Jeśli uderzyliśmy w krawędź mapy, kończymy ten tunel
+                    break;
+                }
+
+                // Szansa na zmianę kierunku w trakcie drążenia (kręte ścieżki)
+                if (_rng.NextDouble() < 0.15)
+                {
+                    di = _rng.Next(-1, 2);
+                    dj = (di == 0) ? (_rng.Next(0, 2) == 0 ? -1 : 1) : 0;
+                }
+            }
+        }
+    }
+
+    public void AddIrregularHalls(int count, int minSize, int maxSize)
+    {
+        for (int n = 0; n < count; n++)
+        {
+            int w = _rng.Next(minSize, maxSize);
+            int h = _rng.Next(minSize, maxSize);
+            int startI = _rng.Next(1, GlobalConstants.HEIGHT - h - 1);
+            int startJ = _rng.Next(1, GlobalConstants.WIDTH - w - 1);
+
+            for (int i = startI; i < startI + h; i++)
+            for (int j = startJ; j < startJ + w; j++)
+            {
+                if (_rng.NextDouble() > 0.1) 
+                    _board.Grid[i, j] = GlobalConstants.EMPTY;
+            }
+        }
+    }
+
+    public void GenerateMaze()
+    {
+        var visited = new bool[GlobalConstants.HEIGHT, GlobalConstants.WIDTH];
+        Carve(1, 1, visited);
+        AddCorridors(15);
+    }
+
+    private void Carve(int x, int y, bool[,] visited)
+    {
+        visited[x, y] = true;
+        _board.Grid[x, y] = GlobalConstants.EMPTY;
+
+        var directions = new[] { new[] {-2,0}, new[] {2,0}, new[] {0,-2}, new[] {0,2} }
+                         .OrderBy(_ => _rng.Next()).ToArray();
+
+        foreach (var d in directions)
+        {
+            int nx = x + d[0], ny = y + d[1];
+            if (nx <= 0 || ny <= 0 || nx >= GlobalConstants.HEIGHT - 1 || ny >= GlobalConstants.WIDTH - 1 || visited[nx, ny]) continue;
+
+            _board.Grid[x + d[0] / 2, y + d[1] / 2] = GlobalConstants.EMPTY;
+            Carve(nx, ny, visited);
+        }
+    }
+
+    public void AddRooms(int roomCount = 5, int roomSize = 3)
+    {
+        for (int n = 0; n < roomCount; n++)
+        {
+            int startRow = _rng.Next(1, GlobalConstants.HEIGHT - roomSize - 1);
+            int startCol = _rng.Next(1, GlobalConstants.WIDTH - roomSize - 1);
+            DrawRectangle(startRow, startCol, roomSize, roomSize);
+        }
+    }
+
     public void AddCentralHall(int hallHeight = 5, int hallWidth = 7)
     {
         int startRow = (GlobalConstants.HEIGHT - hallHeight) / 2;
@@ -73,160 +137,99 @@ class DungeonBuilder
         DrawRectangle(startRow, startCol, hallHeight, hallWidth);
     }
 
-    // Dodawanie losowych pokoi
-    public void AddRooms(int roomCount = 5, int roomSize = 1)
+    public void AddCorridors(int count = 10)
     {
-        for (int n = 0; n < roomCount; n++)
+        for (int n = 0; n < count; n++)
         {
-            int maxRow = Math.Max(1, GlobalConstants.HEIGHT - roomSize - 1);
-            int maxCol = Math.Max(1, GlobalConstants.WIDTH - roomSize - 1);
-            int startRow = rng.Next(1, maxRow + 1);
-            int startCol = rng.Next(1, maxCol + 1);
-            DrawRectangle(startRow, startCol, roomSize, roomSize);
-        }
-    }
-    
-    private IItem ApplyRandomEffects(IItem item)
-    {
-        // 1. Zaczynamy od bazowego przedmiotu
-        IItem result = item;
-
-        // 2. Jeśli przedmiot nie jest zakładalny, nie dodajemy efektów bojowych/statystyk
-        if (result is not IEquippable)
-            return result;
-
-        // 3. Nakładamy efekty. Każdy dekorator przyjmuje IItem i sam jest IItem.
-        if (rng.NextDouble() < 0.4)
-        {
-            result = new StrongEffect(result);
-        }
-
-        if (rng.NextDouble() < 0.3)
-        {
-            result = new LuckyEffect(result);
-        }
-
-        // Zwracamy "opakowany" przedmiot. 
-        // Jeśli wpadł w oba IFy, to result jest typu LuckyEffect(StrongEffect(Weapon)).
-        return result;
-    }
-
-    // Procedura: dodawanie przedmiotów
-    public int AddItems(int totalItems = 10)
-    {
-        var simpleItems = new Func<IItem>[] {
-            () => new SimpleItem("Stone", 'O'),
-            () => new SimpleItem("Book", 'B'),
-            () => new SimpleItem("Key", 'K')
-        };
-
-        int added = 0;
-        while (added < totalItems)
-        {
-            int i = rng.Next(1, GlobalConstants.HEIGHT - 1);
-            int j = rng.Next(1, GlobalConstants.WIDTH - 1);
-
-            if (board.Grid[i, j] == GlobalConstants.EMPTY)
+            int i = _rng.Next(1, GlobalConstants.HEIGHT - 1);
+            int j = _rng.Next(1, GlobalConstants.WIDTH - 1);
+            int dir = _rng.Next(4);
+            int di = dir == 0 ? -1 : dir == 1 ? 1 : 0;
+            int dj = dir == 2 ? -1 : dir == 3 ? 1 : 0;
+            
+            for (int k = 0; k < _rng.Next(2, 6); k++)
             {
-                var itemFactory = simpleItems[rng.Next(simpleItems.Length)];
-
-                IItem item = ApplyRandomEffects(itemFactory());
-
-                board.Items[i, j].Add(item);
-                added++;
-            }
-        }
-
-        // Zliczamy wszystkie przedmioty w board.items
-        int totalOnBoard = 0;
-        for (int i = 0; i < GlobalConstants.HEIGHT; i++)
-        {
-            for (int j = 0; j < GlobalConstants.WIDTH; j++)
-            {
-                totalOnBoard += board.Items[i, j].Count;
-            }
-        }
-
-        return totalOnBoard; // zwraca łączną liczbę wszystkich przedmiotów
-    }
-
-    // Procedura: dodawanie broni
-    public void AddWeapons(int totalWeapons = 5)
-    {
-        var weaponFactories = new Func<Weapon>[] 
-        {
-            () => new Weapon(
-                name: "Sword",
-                symbol: 'S',
-                weaponType: new LightWeaponType(),
-                equipStrategy: new OneHandedEquipStrategy()
-            ),
-
-            () => new Weapon(
-                name: "Axe",
-                symbol: 'A',
-                weaponType: new HeavyWeaponType(),
-                equipStrategy: new OneHandedEquipStrategy()
-            ),
-
-            () => new Weapon(
-                name: "Greatsword",
-                symbol: 'G',
-                weaponType: new HeavyWeaponType(),
-                equipStrategy: new TwoHandedEquipStrategy()
-            )
-        };
-
-        int added = 0;
-        while (added < totalWeapons)
-        {
-            int i = rng.Next(1, GlobalConstants.HEIGHT - 1);
-            int j = rng.Next(1, GlobalConstants.WIDTH - 1);
-
-            if (board.Grid[i, j] == GlobalConstants.EMPTY)
-            {
-                var weaponFactory = weaponFactories[rng.Next(weaponFactories.Length)];
-                IItem item = ApplyRandomEffects(weaponFactory());
-                board.Items[i, j].Add(item);
-                added++;
+                int ni = i + di * k, nj = j + dj * k;
+                if (ni <= 0 || ni >= GlobalConstants.HEIGHT - 1 || nj <= 0 || nj >= GlobalConstants.WIDTH - 1) break;
+                _board.Grid[ni, nj] = GlobalConstants.EMPTY;
             }
         }
     }
-    
-    public void AddEnemies(int totalEnemies = 5)
+
+    // --- WYPEŁNIANIE ZAWARTOŚCIĄ ---
+
+    public void AddThemeItems(DungeonTheme theme, int totalItems = 10)
     {
-        // Tablica fabryk przeciwników
-        var enemyFactories = new Func<Enemy>[]
-        {
-            () => new Enemy(name: "Goblin", health: 20, attack: 15, armor: 2),
-            () => new Enemy(name: "Orc", health: 30, attack: 17, armor: 3),
-            () => new Enemy(name: "Troll", health: 50, attack: 20, armor: 5)
-        };
+        AddThemeContent(theme.ItemPool, totalItems, (factory) => ApplyRandomEffects(factory()));
+    }
 
-        int added = 0;
-        int maxAttempts = totalEnemies * 10; // zabezpieczenie przed nieskończoną pętlą
-        int attempts = 0;
+    public void AddThemeWeapons(DungeonTheme theme, int totalWeapons = 5)
+    {
+        AddThemeContent(theme.WeaponFactories, totalWeapons, (factory) => ApplyRandomEffects(factory()));
+    }
 
-        while (added < totalEnemies && attempts < maxAttempts)
+    public void AddThemeEnemies(DungeonTheme theme, int totalEnemies = 5)
+    {
+        int added = 0, attempts = 0;
+        while (added < totalEnemies && attempts < totalEnemies * 20)
         {
             attempts++;
-
-            int i = rng.Next(1, GlobalConstants.HEIGHT - 1);
-            int j = rng.Next(1, GlobalConstants.WIDTH - 1);
-
-            // Sprawdzenie, czy pole jest puste i nie ma już wroga
-            if (board.Grid[i, j] != GlobalConstants.EMPTY || board.Enemies[i, j] != null)
-                continue;
-
-            var enemyFactory = enemyFactories[rng.Next(enemyFactories.Length)];
-            board.PlaceEnemy(i, j, enemyFactory());
-
-            added++;
+            int i = _rng.Next(1, GlobalConstants.HEIGHT - 1), j = _rng.Next(1, GlobalConstants.WIDTH - 1);
+            if (_board.Grid[i, j] == GlobalConstants.EMPTY && _board.Enemies[i, j] == null)
+            {
+                _board.PlaceEnemy(i, j, theme.EnemyFactories[_rng.Next(theme.EnemyFactories.Count)]());
+                added++;
+            }
         }
+    }
 
-        if (added < totalEnemies)
+    public void PlaceArtifact(DungeonTheme theme)
+    {
+        if (theme.ArtifactFactory == null) return;
+        while (true)
         {
-            Console.WriteLine($"Warning: Only placed {added} enemies out of requested {totalEnemies}. Not enough empty spaces."); // TODO
+            int i = _rng.Next(1, GlobalConstants.HEIGHT - 1), j = _rng.Next(1, GlobalConstants.WIDTH - 1);
+            if (_board.Grid[i, j] == GlobalConstants.EMPTY && _board.Items[i, j].Count == 0)
+            {
+                _board.Items[i, j].Add(theme.ArtifactFactory());
+                break;
+            }
         }
+    }
+
+    private void AddThemeContent<T>(List<Func<T>> pool, int count, Func<Func<T>, IItem> itemConverter) where T : IItem
+    {
+        if (pool == null || pool.Count == 0) return;
+        int added = 0;
+        while (added < count)
+        {
+            int i = _rng.Next(1, _board.Grid.GetLength(0) - 1), j = _rng.Next(1, _board.Grid.GetLength(1) - 1);
+            if (_board.Grid[i, j] == GlobalConstants.EMPTY)
+            {
+                _board.Items[i, j].Add(itemConverter(pool[_rng.Next(pool.Count)]));
+                added++;
+            }
+        }
+    }
+    
+    public (int x, int y) FindRandomSafeSpot()
+    {
+        while (true)
+        {
+            int i = _rng.Next(1, GlobalConstants.HEIGHT - 1);
+            int j = _rng.Next(1, GlobalConstants.WIDTH - 1);
+
+            if (_board.Grid[i, j] == GlobalConstants.EMPTY)
+                return (i, j);
+        }
+        return (0, 0);
+    }
+
+    private IItem ApplyRandomEffects(IItem item)
+    {
+        if (item is not IEquippable) return item;
+        if (_rng.NextDouble() < 0.4) item = new StrongEffect(item);
+        if (_rng.NextDouble() < 0.3) item = new LuckyEffect(item);
+        return item;
     }
 }

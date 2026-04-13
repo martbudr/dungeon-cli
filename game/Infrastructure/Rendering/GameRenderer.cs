@@ -1,3 +1,5 @@
+using Game.Services;
+
 namespace Game;
 
 public class GameRenderer
@@ -10,10 +12,10 @@ public class GameRenderer
     private readonly StatsRenderer _statsRenderer = new();
     private readonly InventoryRenderer _inventoryRenderer = new();
     private readonly TutorialRenderer _tutorialRenderer = new();
-    private readonly MessageRenderer _messageRenderer = new();
+    private readonly LogRenderer _logRenderer = new();
     private readonly DetailsRenderer _detailsRenderer = new();
 
-    public void Draw(Board board, Player player, List<string> tutorialInstructions, string lastMessage)
+    public void Draw(Board board, Player player, List<string> tutorialInstructions, List<string> recentLogs)
     {
         Console.SetCursorPosition(0, 0);
 
@@ -28,7 +30,7 @@ public class GameRenderer
         _statsRenderer.Render(statsPanel, player);
 
         // Prawa kolumna → TARGET + EQUIPPED
-        var detailsPanel = new UIPanel(rightX, 0, middleX);
+        var detailsPanel = new UIPanel(rightX, 0, MiddleWidth);
         _detailsRenderer.Render(detailsPanel, player);
 
         // Dalsza prawa kolumna → INVENTORY
@@ -36,16 +38,23 @@ public class GameRenderer
         _inventoryRenderer.Render(invPanel, board, player);
 
         // Wiadomość
-        _messageRenderer.Render(lastMessage, GlobalConstants.HEIGHT + 1);
+        // _messageRenderer.Render(lastMessage, GlobalConstants.HEIGHT + 1);
 
+        // Log
+        var logPanel = new UIPanel(0, GlobalConstants.HEIGHT + 1, Console.WindowWidth / 3 - 1);
+        _logRenderer.Render(logPanel, recentLogs);
+        
         // Tutorial
-        var tutorialPanel = new UIPanel(0, GlobalConstants.HEIGHT + 3, Console.WindowWidth - 1);
-        _tutorialRenderer.Render(tutorialPanel, tutorialInstructions);
+        var tutorialPanel = new UIPanel(Console.WindowWidth / 3, GlobalConstants.HEIGHT + 1, Console.WindowWidth / 3 - 1);
+        _tutorialRenderer.Render(tutorialPanel, tutorialInstructions); 
     }
 
-    public void DrawGameOver()
+    public void DrawGameOver(string logPath)
     {
         Console.Clear();
+    
+        // Wyśrodkowanie lub dodanie marginesu górnego dla lepszego efektu
+        Console.WriteLine("\n\n");
         Console.ForegroundColor = ConsoleColor.Red;
 
         string[] art =
@@ -58,10 +67,26 @@ public class GameRenderer
         };
 
         foreach (var line in art)
-            Console.WriteLine(line);
+        {
+            // Dodajemy lekkie wcięcie, żeby art nie kleił się do krawędzi
+            Console.WriteLine("   " + line);
+        }
 
         Console.ResetColor();
-        Console.WriteLine("\nPress any key to exit...");
+    
+        // Sekcja informacji o dzienniku (Log Path)
+        Console.WriteLine("\n" + new string('-', 60));
+        Console.Write("  Your journey has been recorded: ");
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.WriteLine(logPath); // Tutaj wstawiamy przekazaną ścieżkę
+        Console.ResetColor();
+    
+        Console.WriteLine(new string('-', 60));
+    
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.WriteLine("\n  Press any key to exit...");
+        Console.ResetColor();
+    
         Console.ReadKey(true);
     }
 }

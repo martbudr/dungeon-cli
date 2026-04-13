@@ -3,25 +3,36 @@ using Game.Services;
 
 namespace Game;
 
-class Game : IMessageService
+class Game
 {
     private readonly Board board = new();
     private readonly Player player;
     private readonly TutorialBuilder tutorial;
 
     private List<string> tutorialInstructions;
-    private string lastMessage = "";
     private InputHandler inputChain = null!;
     private readonly GameRenderer renderer = new();
+    
+    public static IMessageService Logger { get; private set; }
+    private readonly GameConfig _config;
 
     private bool shouldExit;
 
-    public Game()
+    public Game(GameConfig config)
     {
-        DungeonStrategy strategy = new MazeDungeonStrategy();
-        strategy.Build(board);
+        _config = config;
 
-        player = new Player(this);
+        DungeonTheme theme = ThemeRegistry.GetRandomTheme();
+        theme.Style.Build(board, theme);
+
+        Logger = new GameLogger(_config.PlayerName, _config.LogDirectory);
+        Logger.ShowMessage(theme.WelcomeMessage);
+        
+        var builder = new DungeonBuilder(board);
+        var safeSpot = builder.FindRandomSafeSpot();
+        
+        player = new Player(Logger);
+        player.SetPosition(safeSpot.x, safeSpot.y);
         
         BuildChain();
 
@@ -35,27 +46,29 @@ class Game : IMessageService
     {
         var exitHandler = new ExitHandler();
         exitHandler.OnExit += () => shouldExit = true;
+        
+        var journalRenderer = new JournalRenderer();
 
         inputChain = exitHandler;
 
         inputChain
+            .SetNext(new JournalHandler(Logger, journalRenderer))
             .SetNext(new MovementHandler(player, board))
             .SetNext(new PickupHandler(player, board))
             .SetNext(new EquipmentHandler(player))
             .SetNext(new DropHandler(player, board))
             .SetNext(new SelectionHandler(player))
-            .SetNext(new AttackHandler(player, board));
+            .SetNext(new AttackHandler(player, board, Logger))
+            .SetNext(new UnknownHandler(Logger));
     }
 
     public void Run()
     {
-        Console.CursorVisible = false;
-
         while (!shouldExit)
         {
             tutorialInstructions = tutorial.GenerateInstructions();
             
-            renderer.Draw(board, player, tutorialInstructions, lastMessage);
+            renderer.Draw(board, player, tutorialInstructions, Logger.GetHistory());
             
             var key = Console.ReadKey(true).Key;
             HandleInput(key);
@@ -63,7 +76,7 @@ class Game : IMessageService
             // Sprawdzenie, czy gracz żyje
             if (!player.IsAlive)
             {
-                renderer.DrawGameOver();
+                renderer.DrawGameOver(Logger.FilePath ?? "Log file not found.");
                 shouldExit = true;
                 break;
             }
@@ -72,14 +85,6 @@ class Game : IMessageService
 
     private void HandleInput(ConsoleKey key)
     {
-        if (!inputChain.Handle(key))
-        {
-            ShowMessage($"Unknown key: {key}. Try again.");
-        }
-    }
-
-    public void ShowMessage(string message)
-    {
-        lastMessage = message;
+        inputChain.Handle(key);
     }
 }

@@ -1,5 +1,6 @@
 using Game;
 using Game.Combat;
+using Game.Services;
 
 namespace game.Combat;
 
@@ -12,9 +13,9 @@ public enum CombatResult
 
 public static class CombatSystem
 {
-    public static CombatResult SingleTurn(Player player, Enemy enemy, IAttackHandler attack)
+    public static CombatResult SingleTurn(Player player, Enemy enemy, IAttackHandler attack, IMessageService logger)
     {
-        if (!(player.Health > 0) || !enemy.IsAlive)
+        if (!(player.GetBaseStat("HP") > 0) || !enemy.IsAlive)
             return CombatResult.None;
         
         // Gracz atakuje wroga
@@ -34,7 +35,9 @@ public static class CombatSystem
             playerDamage += rightWeapon.Calculate(player, attack).Damage;
         }
 
-        enemy.TakeDamage(playerDamage);
+        string attackName = attack.GetType().Name.Replace("Attack", ""); 
+        player.ShowMessage($"You use {attackName} and deal {playerDamage} damage!");
+        enemy.TakeDamage(playerDamage, logger);
         if (!enemy.IsAlive)
         {
             return CombatResult.EnemyDied;
@@ -42,6 +45,7 @@ public static class CombatSystem
 
         // Wróg atakuje gracza
         int enemyDamage = enemy.DealDamage();
+        player.ShowMessage($"{enemy.Name} attacks and deals {enemyDamage} damage.");
         player.TakeDamage(enemyDamage, attack);
         
         return !player.IsAlive ? CombatResult.PlayerDied : CombatResult.None;

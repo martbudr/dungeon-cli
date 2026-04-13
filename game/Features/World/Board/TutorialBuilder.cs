@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
 namespace Game;
 
 class TutorialRule
@@ -16,11 +12,15 @@ class TutorialBuilder
     private readonly Player player;
 
     private List<TutorialRule> rules;
+    
+    private readonly bool _hasCurrencyOnStart;
 
     public TutorialBuilder(Board board, Player player)
     {
         this.board = board;
         this.player = player;
+        
+        _hasCurrencyOnStart = ScanForCurrency();
 
         BuildRules();
     }
@@ -40,50 +40,50 @@ class TutorialBuilder
             new TutorialRule
             {
                 Condition = ShouldShowMovementTutorial,
-                Text = "Move using WASD keys."
-            },
-
-            new TutorialRule
-            {
-                Condition = ShouldShowPickupTutorial,
-                Text = "Press E to pick up items and weapons."
-            },
-
-            new TutorialRule
-            {
-                Condition = ShouldShowEquipmentTutorial,
-                Text = "Equip weapons using D1 (left hand) and D2 (right hand)."
-            },
-
-            new TutorialRule
-            {
-                Condition = ShouldShowCurrencyTutorial,
-                Text = "Collect currency to buy items."
+                Text = "MOVEMENT: Use [W, A, S, D] to navigate."
             },
 
             new TutorialRule
             {
                 Condition = ShouldShowWallsTutorial,
-                Text = "Walls block movement."
+                Text = "OBSTACLES: Walls [█] block your path."
+            },
+
+            new TutorialRule
+            {
+                Condition = ShouldShowPickupTutorial,
+                Text = "LOOT: Press [E] to pick up an item."
             },
 
             new TutorialRule
             {
                 Condition = ShouldShowInventoryTutorial,
-                Text = "Use Up/Down arrows to select items and Q to drop them."
+                Text = "INVENTORY: Use [UP/DOWN] to select and [Q] to drop an item."
+            },
+
+            new TutorialRule
+            {
+                Condition = ShouldShowEquipmentTutorial,
+                Text = "EQUIP: Press [1] (Left) or [2] (Right) to arm yourself."
             },
 
             new TutorialRule
             {
                 Condition = ShouldShowDropTutorial,
-                Text = "Press L to drop the left-hand weapon, R to drop the right-hand weapon."
+                Text = "DISARM: Press [L] or [R] to unequip your current weapons."
             },
-            
+
             new TutorialRule
             {
                 Condition = ShouldShowAttackTutorial,
-                Text = "To attack press H and then choose attack: N = normal, K = sneak, M = magic"
-            }
+                Text = "COMBAT: Press [H] to initiate attack. Choose: [N]ormal, Snea[K], or [M]agic."
+            },
+
+            new TutorialRule
+            {
+                Condition = ShouldShowCurrencyTutorial,
+                Text = "TREASURE: Collect coins and gold to increase wealth."
+            },
         };
     }
 
@@ -119,10 +119,7 @@ class TutorialBuilder
         return hasWeaponInInventory && !hasAnythingInHands;
     }
     
-    private bool ShouldShowCurrencyTutorial()
-    {
-        return HasCurrency();
-    }
+    private bool ShouldShowCurrencyTutorial() => _hasCurrencyOnStart;
     
     private bool ShouldShowInventoryTutorial()
     {
@@ -136,7 +133,7 @@ class TutorialBuilder
 
     private bool ShouldShowAttackTutorial()
     {
-        return (player.LeftHandItem is Weapon) || (player.RightHandItem is Weapon);
+        return board.Enemies[player.X, player.Y] is { IsAlive: true };
     }
     
     private bool HasEmptyTiles()
@@ -149,14 +146,12 @@ class TutorialBuilder
         return false;
     }
 
-    private bool HasCurrency()
+    private bool ScanForCurrency()
     {
-        // zeby nie sugerowac graczowi ze ma latwy dostep do pieniedzy (jak w przypadku wyswietlania tylko wtedy kiedy stanie na walute)
         for (int i = 0; i < GlobalConstants.HEIGHT; i++)
         for (int j = 0; j < GlobalConstants.WIDTH; j++)
-            foreach (var item in board.Items[i, j])
-                if (item is Currency)
-                    return true;
+            if (board.Items[i, j].Any(item => item is Currency))
+                return true;
 
         return false;
     }

@@ -8,6 +8,48 @@ public class Player
 {
     public int X { get; private set; } = 0;
     public int Y { get; private set; } = 0;
+
+    private readonly PlayerStats _stats;
+    private readonly IMessageService _logger;
+    private readonly EquipmentManager _equipment;
+    
+    public bool IsAlive => _stats.Health > 0;
+    
+    public Player(IMessageService logger)
+    {
+        _logger = logger;
+        _stats = new PlayerStats();
+        _equipment = new EquipmentManager(this, _stats, _logger);
+    }
+    
+    public int Coins => _stats.Coins;
+    public int Gold => _stats.Gold;
+    
+    public IItem? LeftHandItem { get => _equipment.LeftHandItem; set => _equipment.LeftHandItem = value; }
+    public IItem? RightHandItem { get => _equipment.RightHandItem; set => _equipment.RightHandItem = value; }
+    public List<IItem> Inventory => _equipment.Inventory;
+    public int SelectedItem 
+    { 
+        get => _equipment.SelectedItem; 
+        set => _equipment.SelectedItem = value; 
+    }
+    
+    public int Strength => _stats.BaseStrength + GetBonus(m => m.Strength);
+    public int Dexterity => _stats.BaseDexterity + GetBonus(m => m.Dexterity);
+    public int Luck => _stats.BaseLuck + GetBonus(m => m.Luck);
+    public int Aggression => _stats.BaseAggression + GetBonus(m => m.Aggression);
+    public int Wisdom => _stats.BaseWisdom + GetBonus(m => m.Wisdom);
+    
+    public void AddItem(IItem item) => _equipment.AddItem(item);
+    public void Equip(int index, bool left) => _equipment.Equip(index, left);
+    public void Unequip(bool left) => _equipment.Unequip(left);
+    public void Drop(int index, List<IItem>[,] worldItems) => _equipment.Drop(index, worldItems);
+    
+    public void SetPosition(int x, int y)
+    {
+        X = x;
+        Y = y;
+    }
     
     public Dictionary<string, int> GetCurrentStats()
     {
@@ -15,7 +57,7 @@ public class Player
         {
             {"STR", Strength},
             {"DEX", Dexterity},
-            {"HP", Health},
+            {"HP", _stats.Health},
             {"LUCK", Luck},
             {"AGR", Aggression},
             {"WIS", Wisdom}
@@ -24,52 +66,25 @@ public class Player
     
     public int GetBaseStat(string statName) => statName switch
     {
-        "STR" => BaseStrength,
-        "DEX" => BaseDexterity,
-        "HP" => Health,
-        "LUCK" => BaseLuck,
-        "AGR" => BaseAggression,
-        "WIS" => BaseWisdom,
+        "STR" => _stats.BaseStrength,
+        "DEX" => _stats.BaseDexterity,
+        "HP" => _stats.Health,
+        "LUCK" => _stats.BaseLuck,
+        "AGR" => _stats.BaseAggression,
+        "WIS" => _stats.BaseWisdom,
         _ => 0
     };
-    
-    public int BaseStrength = 5;
-    public int BaseDexterity = 5;
-    public int BaseLuck = 5;
-    public int BaseAggression = 5;
-    public int BaseWisdom = 5;
-    
-    public int Strength => BaseStrength + GetBonus(m => m.Strength);
-    public int Dexterity => BaseDexterity + GetBonus(m => m.Dexterity);
-    public int Luck => BaseLuck + GetBonus(m => m.Luck);
-    public int Aggression => BaseAggression + GetBonus(m => m.Aggression);
-    public int Wisdom => BaseWisdom + GetBonus(m => m.Wisdom);
-    
-    public int Health = 100;
-
-    public int Coins = 0;
-    public int Gold = 0;
-    
-    public bool IsAlive { get; private set; } = true;
-
-    public List<IItem> Inventory = [];
-    public int SelectedItem = 0;
-    public IItem? LeftHandItem { get; set; }
-
-    public IItem? RightHandItem { get; set; }
-
-    public const int MaxInventorySlots = 10;
     
     private int GetBonus(Func<IStatModifier, int> selector)
     {
         // Jeśli w obu rękach jest to samo (broń dwuręczna), licz tylko raz
-        if (LeftHandItem != null && LeftHandItem == RightHandItem)
+        if (_equipment.LeftHandItem != null && _equipment.LeftHandItem == _equipment.RightHandItem)
         {
-            return CalculateItemBonus(LeftHandItem, selector);
+            return CalculateItemBonus(_equipment.LeftHandItem, selector);
         }
 
-        return CalculateItemBonus(LeftHandItem, selector) + 
-               CalculateItemBonus(RightHandItem, selector);
+        return CalculateItemBonus(_equipment.LeftHandItem, selector) + 
+               CalculateItemBonus(_equipment.RightHandItem, selector);
     }
 
     private int CalculateItemBonus(IItem? item, Func<IStatModifier, int> selector)
@@ -93,135 +108,50 @@ public class Player
 
         return sum;
     }
-
-    private readonly IMessageService messageService;
-
-    public Player(IMessageService messageService)
-    {
-        this.messageService = messageService;
-    }
     
-    public void ShowMessage(string message)
-    {
-        messageService.ShowMessage(message);
-    }
-    
-    public void Kill()
-    {
-        IsAlive = false;
-    }
-
     public void Move(int dx, int dy, char[,] board)
     {
         var nx = X + dx;
         var ny = Y + dy;
 
         if (nx < 0 || nx >= GlobalConstants.HEIGHT ||
-            ny < 0 || ny >= GlobalConstants.WIDTH ||
-            board[nx, ny] == GlobalConstants.WALL) return;
-        
-        X = nx;
-        Y = ny;
-    }
+            ny < 0 || ny >= GlobalConstants.WIDTH) return;
 
-    public void AddItem(IItem item)
-    {
-        if (item is Currency currency)
+        if (board[nx, ny] == GlobalConstants.WALL)
         {
-            switch (currency.CurrencyType)
-            {
-                case CurrencyType.Coin:
-                    Coins += currency.GetValue();
-                    break;
-
-                case CurrencyType.Gold:
-                    Gold += currency.GetValue();
-                    break;
-            }
-
+            _logger.ShowMessage("Trying to bump into a wall.");
             return;
         }
-
-        Inventory.Add(item);
-    }
-
-    public void Equip(int index, bool left)
-    {
-        if (index < 0 || index >= Inventory.Count) return;
-        IItem fullItem = Inventory[index];
-
-        if (fullItem is IEquippable equippable && equippable.EquipStrategy != null)
-        {
-            equippable.Equip(this, left);
         
-            // Jeśli po wywołaniu Equip przedmiot faktycznie trafił do ręki (strategia zadziałała)
-            if (left && LeftHandItem == fullItem || !left && RightHandItem == fullItem)
-            {
-                Inventory.RemoveAt(index);
-                messageService.ShowMessage($"Equipped {fullItem.Name}");
-            }
-        }
-        else
-        {
-            messageService.ShowMessage("This item cannot be equipped.");
-        }
-    }
-
-    public void Unequip(bool left)
-    {
-        IItem? item = left ? LeftHandItem : RightHandItem;
-        if (item == null) return;
-
-        if (item is IEquippable equippable)
-        {
-            // Strategia wyczyści sloty w Playerze
-            equippable.Unequip(this, left);
-        }
-        else
-        {
-            // Failsafe dla przedmiotów bez strategii
-            if (left) LeftHandItem = null; else RightHandItem = null;
-        }
-
-        // ZAWSZE dodajemy z powrotem to, co wyciągnęliśmy ze slotu
-        Inventory.Add(item);
-    }
-
-    public void Drop(int index, List<IItem>[,] items)
-    {
-        if (index < 0 || index >= Inventory.Count)
-            return;
-
-        items[X, Y].Add(Inventory[index]);
-        Inventory.RemoveAt(index);
+        SetPosition(nx, ny);
     }
     
     public void TakeDamage(int baseDamage, IAttackHandler? attack = null)
     {
-        // Oblicz defensywne bonusy z broni
-        int defenseFromLeft = LeftHandItem is IItem leftItem && attack != null
-            ? leftItem.Calculate(this, attack).Defense
+        int defenseFromLeft = (_equipment.LeftHandItem != null && attack != null) 
+            ? _equipment.LeftHandItem.Calculate(this, attack).Defense 
             : 0;
-
-        int defenseFromRight = RightHandItem is IItem rightItem && attack != null
-            ? rightItem.Calculate(this, attack).Defense
+        int defenseFromRight = (_equipment.RightHandItem != null && attack != null) 
+            ? _equipment.RightHandItem.Calculate(this, attack).Defense 
             : 0;
-
-        // Statystyki gracza mogą też wpływać na obronę
-        int playerDefense = Dexterity; // mogą być też inne statystyki
-
-        // Całkowita obrona
-        int totalDefense = playerDefense + defenseFromLeft + defenseFromRight;
-
-        // Oblicz ostateczne obrażenia
+    
+        int totalDefense = Dexterity + defenseFromLeft + defenseFromRight;
         int reducedDamage = Math.Max(baseDamage - totalDefense, 0);
-        Health -= reducedDamage;
+    
+        _stats.Health -= reducedDamage;
 
-        // Sprawdzenie śmierci gracza
-        if (Health <= 0 && IsAlive)
-        {
-            Health = 0;      // zabezpieczenie, żeby nie było ujemnego życia
-            IsAlive = false; // oznaczenie gracza jako martwego
-        }
+        LogDamage(reducedDamage, totalDefense);
     }
+    
+    private void LogDamage(int damage, int defense)
+    {
+        if (damage > 0)
+            _logger.ShowMessage($"You take {damage} damage (Blocked: {defense}).");
+        else
+            _logger.ShowMessage($"Blocked! (Defense: {defense})");
+
+        if (!IsAlive) _logger.ShowMessage("CRITICAL: You have fallen...");
+    }
+    
+    public void ShowMessage(string message) => _logger.ShowMessage(message);
 }
