@@ -45,7 +45,7 @@ class Program
 
         try
         {
-            Game game = new Game(config);
+            game.Core.Game game = new game.Core.Game(config);
             game.Run();
         }
         catch (Exception ex)

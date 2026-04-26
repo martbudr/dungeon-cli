@@ -1,5 +1,6 @@
-using game.Combat;
 using Game.Combat;
+using game.Domain.Entities;
+using game.Features.Combat;
 using Game.Services;
 
 namespace Game.InputHandlers;
@@ -33,7 +34,7 @@ class AttackHandler : InputHandler
             return base.Handle(key);
         }
 
-        // Jeśli jesteśmy w trybie oczekiwania, akceptujemy tylko Z/X/C
+        // Jeśli jesteśmy w trybie oczekiwania, akceptujemy tylko N/K/M
         IAttackHandler? attack = key switch
         {
             ConsoleKey.N => new NormalAttack(),
@@ -52,17 +53,17 @@ class AttackHandler : InputHandler
                 if (result == CombatResult.EnemyDied)
                 {
                     board.Enemies[player.X, player.Y] = null;
-                    player.ShowMessage("Enemy defeated!");
+                    logger.ShowMessage("Enemy defeated!");
                 }
             }
 
             waitingForAttackKey = false; // wychodzimy z trybu blokowania
-            return true;
         }
         else
         {
-            player.ShowMessage("Invalid key! Press N, K, or M to attack.");
-            return true; // blokujemy wszystko inne
+            logger.ShowMessage("Invalid key! Press N, K, or M to attack.");
         }
+
+        return true;
     }
 }

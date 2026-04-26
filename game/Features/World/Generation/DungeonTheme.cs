@@ -1,3 +1,5 @@
+using game.Domain.Entities;
+
 namespace Game;
 
 public class DungeonTheme
@@ -8,7 +10,7 @@ public class DungeonTheme
     
     // Dane dla Buildera
     public List<Func<Weapon>> WeaponFactories { get; set; }
-    public List<Func<Enemy>> EnemyFactories { get; set; }
+    public List<Func<GameContext, Enemy>> EnemyFactories { get; set; }
     public List<Func<IItem>> ItemPool { get; set; }
-    public Func<IItem> ArtifactFactory { get; set; } // only one artifact
+    public Func<IItem>? ArtifactFactory { get; set; } // only one artifact
 }

@@ -1,3 +1,4 @@
+using game.Domain.Entities;
 using Game.Effects;
 using Game.EquipStrategies;
 
@@ -6,11 +7,13 @@ namespace Game;
 class DungeonBuilder
 {
     private readonly Board _board;
+    private readonly GameContext _context;
     private readonly Random _rng = new();
 
-    public DungeonBuilder(Board board)
+    public DungeonBuilder(GameContext context)
     {
-        _board = board;
+        _board = context.Board;
+        _context = context;
     }
 
     // --- PODSTAWOWE OPERACJE NA SIATCE ---
@@ -168,19 +171,53 @@ class DungeonBuilder
         AddThemeContent(theme.WeaponFactories, totalWeapons, (factory) => ApplyRandomEffects(factory()));
     }
 
-    public void AddThemeEnemies(DungeonTheme theme, int totalEnemies = 5)
+    public void AddThemeEnemies(DungeonTheme theme, int totalEnemies = 10)
     {
-        int added = 0, attempts = 0;
-        while (added < totalEnemies && attempts < totalEnemies * 20)
+        int added = 0;
+        var factories = theme.EnemyFactories;
+    
+        // 1. Gwarancja: Każdy gatunek musi mieć min. 2 osobników
+        foreach (var factory in factories)
         {
-            attempts++;
-            int i = _rng.Next(1, GlobalConstants.HEIGHT - 1), j = _rng.Next(1, GlobalConstants.WIDTH - 1);
-            if (_board.Grid[i, j] == GlobalConstants.EMPTY && _board.Enemies[i, j] == null)
+            for (int k = 0; k < 2; k++)
             {
-                _board.PlaceEnemy(i, j, theme.EnemyFactories[_rng.Next(theme.EnemyFactories.Count)]());
+                if (added >= totalEnemies) break;
+                PlaceAtRandomLocation(factory);
                 added++;
             }
         }
+
+        // 2. Reszta: Wypełniamy pozostałe wolne miejsca (do totalEnemies) losowymi gatunkami
+        while (added < totalEnemies)
+        {
+            var randomFactory = factories[_rng.Next(factories.Count)];
+            if (PlaceAtRandomLocation(randomFactory))
+            {
+                added++;
+            }
+            else
+            {
+                // Jeśli po wielu próbach nie da się postawić potwora (brak miejsca), przerywamy
+                break; 
+            }
+        }
+    }
+
+    private bool PlaceAtRandomLocation(Func<GameContext, Enemy> factory)
+    {
+        var attempts = 0;
+        while (attempts < 100)
+        {
+            attempts++;
+            var i = _rng.Next(1, GlobalConstants.HEIGHT - 1);
+            var j = _rng.Next(1, GlobalConstants.WIDTH - 1);
+
+            if (_board.Grid[i, j] != GlobalConstants.EMPTY || _board.Enemies[i, j] != null) continue;
+            
+            _board.PlaceEnemy(i, j, factory(_context));
+            return true;
+        }
+        return false;
     }
 
     public void PlaceArtifact(DungeonTheme theme)
@@ -189,11 +226,10 @@ class DungeonBuilder
         while (true)
         {
             int i = _rng.Next(1, GlobalConstants.HEIGHT - 1), j = _rng.Next(1, GlobalConstants.WIDTH - 1);
-            if (_board.Grid[i, j] == GlobalConstants.EMPTY && _board.Items[i, j].Count == 0)
-            {
-                _board.Items[i, j].Add(theme.ArtifactFactory());
-                break;
-            }
+            if (_board.Grid[i, j] != GlobalConstants.EMPTY || _board.Items[i, j].Count != 0) continue;
+            
+            _board.Items[i, j].Add(theme.ArtifactFactory());
+            break;
         }
     }
 

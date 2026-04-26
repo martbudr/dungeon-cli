@@ -1,8 +1,9 @@
 using Game;
 using Game.Combat;
+using game.Domain.Entities;
 using Game.Services;
 
-namespace game.Combat;
+namespace game.Features.Combat;
 
 public enum CombatResult
 {
@@ -19,6 +20,22 @@ public static class CombatSystem
             return CombatResult.None;
         
         // Gracz atakuje wroga
+        int playerDamage = CalculateDamage(player, attack);
+         
+        player.Attack(enemy, attack, playerDamage);
+        if (!enemy.IsAlive)
+        {
+            return CombatResult.EnemyDied;
+        }
+
+        // Wróg atakuje gracza
+        enemy.Attack(player);
+        
+        return !player.IsAlive ? CombatResult.PlayerDied : CombatResult.None;
+    }
+
+    private static int CalculateDamage(Player player, IAttackHandler attack)
+    {
         int playerDamage = 0;
 
         // Lewa ręka
@@ -34,20 +51,7 @@ public static class CombatSystem
         {
             playerDamage += rightWeapon.Calculate(player, attack).Damage;
         }
-
-        string attackName = attack.GetType().Name.Replace("Attack", ""); 
-        player.ShowMessage($"You use {attackName} and deal {playerDamage} damage!");
-        enemy.TakeDamage(playerDamage, logger);
-        if (!enemy.IsAlive)
-        {
-            return CombatResult.EnemyDied;
-        }
-
-        // Wróg atakuje gracza
-        int enemyDamage = enemy.DealDamage();
-        player.ShowMessage($"{enemy.Name} attacks and deals {enemyDamage} damage.");
-        player.TakeDamage(enemyDamage, attack);
         
-        return !player.IsAlive ? CombatResult.PlayerDied : CombatResult.None;
+        return playerDamage;
     }
 }

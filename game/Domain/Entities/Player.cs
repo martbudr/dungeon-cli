@@ -1,26 +1,23 @@
 using Game.Combat;
+using game.Domain.Entities;
+using game.Domain.Events;
+using game.Domain.Systems;
 using Game.Effects;
 using Game.Services;
 
 namespace Game;
 
-public class Player
+public class Player : IDamageable
 {
-    public int X { get; private set; } = 0;
-    public int Y { get; private set; } = 0;
+    public int X { get; private set; }
+    public int Y { get; private set; }
 
     private readonly PlayerStats _stats;
     private readonly IMessageService _logger;
+    private readonly EventDispatcher _dispatcher;
     private readonly EquipmentManager _equipment;
     
     public bool IsAlive => _stats.Health > 0;
-    
-    public Player(IMessageService logger)
-    {
-        _logger = logger;
-        _stats = new PlayerStats();
-        _equipment = new EquipmentManager(this, _stats, _logger);
-    }
     
     public int Coins => _stats.Coins;
     public int Gold => _stats.Gold;
@@ -28,6 +25,16 @@ public class Player
     public IItem? LeftHandItem { get => _equipment.LeftHandItem; set => _equipment.LeftHandItem = value; }
     public IItem? RightHandItem { get => _equipment.RightHandItem; set => _equipment.RightHandItem = value; }
     public List<IItem> Inventory => _equipment.Inventory;
+    
+    public Player(IMessageService logger, EventDispatcher dispatcher, Board board)
+    {
+        _logger = logger;
+        _dispatcher = dispatcher;
+        
+        _stats = new PlayerStats();
+        _equipment = new EquipmentManager(this, _stats, _logger, _dispatcher, board);
+    }
+    
     public int SelectedItem 
     { 
         get => _equipment.SelectedItem; 
@@ -109,21 +116,36 @@ public class Player
         return sum;
     }
     
-    public void Move(int dx, int dy, char[,] board)
+    public void Move(int dx, int dy, Board board)
     {
         var nx = X + dx;
         var ny = Y + dy;
 
-        if (nx < 0 || nx >= GlobalConstants.HEIGHT ||
-            ny < 0 || ny >= GlobalConstants.WIDTH) return;
+        if (!Board.IdxInRange(nx, ny))
+        {
+            _logger.ShowMessage("Trying to go outside the map.");
+            return;
+        }
 
-        if (board[nx, ny] == GlobalConstants.WALL)
+        if (board.IsWall(nx, ny))
         {
             _logger.ShowMessage("Trying to bump into a wall.");
             return;
         }
-        
+
         SetPosition(nx, ny);
+        _equipment.MakeNoise(NoiseProfile.Movement);
+    }
+    
+    public void Attack(IDamageable target, IAttackHandler attack, int damage)
+    {
+        string attackName = attack.GetType().Name.Replace("Attack", ""); 
+        _logger.ShowMessage($"You use {attackName} and deal {damage} damage!");
+
+        int attackNoise = (LeftHandItem?.Noise ?? 0) + 2; 
+        _equipment.MakeNoise(attackNoise);
+
+        target.TakeDamage(damage, attack);
     }
     
     public void TakeDamage(int baseDamage, IAttackHandler? attack = null)
@@ -145,13 +167,10 @@ public class Player
     
     private void LogDamage(int damage, int defense)
     {
-        if (damage > 0)
-            _logger.ShowMessage($"You take {damage} damage (Blocked: {defense}).");
-        else
-            _logger.ShowMessage($"Blocked! (Defense: {defense})");
+        _logger.ShowMessage(damage > 0
+            ? $"You take {damage} damage (Blocked: {defense})."
+            : $"Blocked! (Defense: {defense})");
 
         if (!IsAlive) _logger.ShowMessage("CRITICAL: You have fallen...");
     }
-    
-    public void ShowMessage(string message) => _logger.ShowMessage(message);
 }

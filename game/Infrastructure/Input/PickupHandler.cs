@@ -1,14 +1,18 @@
+using Game.Services;
+
 namespace Game.InputHandlers;
 
 class PickupHandler : InputHandler
 {
     private Player player;
     private Board board;
+    private IMessageService logger;
 
-    public PickupHandler(Player player, Board board)
+    public PickupHandler(Player player, Board board, IMessageService logger)
     {
         this.player = player;
         this.board = board;
+        this.logger = logger;
     }
 
     public override bool Handle(ConsoleKey key)
@@ -19,7 +23,7 @@ class PickupHandler : InputHandler
             if (cell.Count > 0)
             {
                 player.AddItem(cell[0]);
-                player.ShowMessage($"You equipped the {cell[0].Name}.");
+                logger.ShowMessage($"You equipped the {cell[0].Name}.");
                 cell.RemoveAt(0);
             }
             return true;

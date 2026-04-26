@@ -22,7 +22,7 @@ public class JournalRenderer
         {
             foreach (var entry in history)
             {
-                if (entry.Contains("damage") || entry.Contains("defeated") || entry.Contains("blocked")) 
+                if (entry.Contains("damage") || entry.Contains("defeated") || entry.Contains("blocked")  || entry.Contains("deflects")) 
                     Console.ForegroundColor = ConsoleColor.Red;
                 else if (entry.Contains("does nothing")) Console.ForegroundColor = ConsoleColor.Yellow;
                 else if (entry.Contains("Picked up")) Console.ForegroundColor = ConsoleColor.Cyan;

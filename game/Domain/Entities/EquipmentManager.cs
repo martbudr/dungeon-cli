@@ -1,12 +1,18 @@
+using Game;
+using game.Domain.Events;
+using game.Domain.Services;
+using game.Domain.Systems;
 using Game.Services;
 
-namespace Game;
+namespace game.Domain.Entities;
 
 public class EquipmentManager
 {
-    private readonly Player _player;
-    private readonly PlayerStats _stats;
-    private readonly IMessageService _logger;
+    private readonly Player player;
+    private readonly PlayerStats stats;
+    private readonly IMessageService logger;
+    private readonly EventDispatcher dispatcher;
+    private readonly Board board;
     
     public List<IItem> Inventory { get; } = new();
     public IItem? LeftHandItem { get; set; }
@@ -14,11 +20,13 @@ public class EquipmentManager
     public const int MaxInventorySlots = 10;
     public int SelectedItem = 0;
     
-    public EquipmentManager(Player player, PlayerStats stats, IMessageService logger)
+    public EquipmentManager(Player player, PlayerStats stats, IMessageService logger, EventDispatcher dispatcher, Board board)
     {
-        _player = player;
-        _stats = stats;
-        _logger = logger;
+        this.player = player;
+        this.stats = stats;
+        this.logger = logger;
+        this.dispatcher = dispatcher;
+        this.board = board;
     }
     
     public void AddItem(IItem item)
@@ -28,11 +36,11 @@ public class EquipmentManager
             switch (currency.CurrencyType)
             {
                 case CurrencyType.Coin:
-                    _stats.Coins += currency.GetValue();
+                    stats.Coins += currency.GetValue();
                     break;
 
                 case CurrencyType.Gold:
-                    _stats.Gold += currency.GetValue();
+                    stats.Gold += currency.GetValue();
                     break;
             }
 
@@ -40,36 +48,53 @@ public class EquipmentManager
         }
 
         Inventory.Add(item);
+        
+        int noiseRange = GetNoiseForItem(item);
+        if (noiseRange > 0) 
+        {
+            MakeNoise(noiseRange);
+        }
+    }
+    public void MakeNoise(int range)
+    {
+        if(range <= 0) return;
+        
+        var service = new SoundPropagationService();
+        // Obliczamy zasięg raz
+        var reachedTiles = service.Propagate(board, player.X, player.Y, range);
+    
+        // Tworzymy zdarzenie z gotową mapą zasięgu
+        var noiseEvent = new NoiseEvent(player.X, player.Y, range, reachedTiles);
+        dispatcher.Publish(noiseEvent);
     }
 
     public void Equip(int index, bool left)
     {
         if (index < 0 || index >= Inventory.Count) return;
-        IItem fullItem = Inventory[index];
+        var fullItem = Inventory[index];
 
         if (fullItem is IEquippable equippable && equippable.EquipStrategy != null)
         {
-            equippable.Equip(_player, left);
-        
-            // Jeśli po wywołaniu Equip przedmiot faktycznie trafił do ręki (strategia zadziałała)
-            if (left && LeftHandItem == fullItem || !left && RightHandItem == fullItem)
-            {
-                Inventory.RemoveAt(index);
+            equippable.Equip(player, left);
 
-                if (LeftHandItem == fullItem && RightHandItem == fullItem)
-                {
-                    _logger.ShowMessage($"You take the {fullItem.Name} in your both hands.");
-                }
-                else
-                {
-                    string hand = left ? "left" : "right";
-                    _logger.ShowMessage($"You take the {fullItem.Name} in your {hand} hand.");
-                }
+            if (!(left && LeftHandItem == fullItem) && !(!left && RightHandItem == fullItem)) return;
+            
+            // Jeśli po wywołaniu Equip przedmiot faktycznie trafił do ręki (strategia zadziałała)
+            Inventory.RemoveAt(index);
+
+            if (LeftHandItem == fullItem && RightHandItem == fullItem)
+            {
+                logger.ShowMessage($"You take the {fullItem.Name} in your both hands.");
+            }
+            else
+            {
+                var hand = left ? "left" : "right";
+                logger.ShowMessage($"You take the {fullItem.Name} in your {hand} hand.");
             }
         }
         else
         {
-            _logger.ShowMessage("This item cannot be equipped.");
+            logger.ShowMessage("This item cannot be equipped.");
         }
     }
 
@@ -81,7 +106,7 @@ public class EquipmentManager
         if (item is IEquippable equippable)
         {
             // Strategia wyczyści sloty w Playerze
-            equippable.Unequip(_player, left);
+            equippable.Unequip(player, left);
         }
         else
         {
@@ -98,7 +123,12 @@ public class EquipmentManager
         if (index < 0 || index >= Inventory.Count)
             return;
 
-        items[_player.X, _player.Y].Add(Inventory[index]);
+        items[player.X, player.Y].Add(Inventory[index]);
         Inventory.RemoveAt(index);
+    }
+    
+    private int GetNoiseForItem(IItem item)
+    {
+        return item.Noise;
     }
 }

@@ -1,3 +1,5 @@
+using game.Domain.Entities;
+
 namespace Game;
 
 public class InventoryRenderer

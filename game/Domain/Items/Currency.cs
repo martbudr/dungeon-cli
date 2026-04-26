@@ -10,6 +10,7 @@ public class Currency : IItem
     private readonly int value;
     private readonly CurrencyType type;
     private readonly IWeaponType weaponType = new NoWeaponType();
+    public int Noise => weaponType.Noise;
 
     public Currency(string name, char symbol, CurrencyType type, int value)
     {

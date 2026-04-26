@@ -6,10 +6,9 @@ public class Weapon : IItem, IEquippable
 {
     public string Name { get; }
     public char Symbol { get; }
-
     
-    public IItem BaseItem => this;
     private readonly IWeaponType weaponType;
+    public int Noise => weaponType.Noise;
     public IEquipStrategy EquipStrategy { get; }
 
     public Weapon(

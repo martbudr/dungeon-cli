@@ -1,4 +1,3 @@
-using game.Combat;
 using Game.Combat;
 
 namespace Game.InputHandlers;
@@ -27,7 +26,7 @@ class MovementHandler : InputHandler
             default: return base.Handle(key);
         }
         
-        player.Move(dx, dy, board.Grid);
+        player.Move(dx, dy, board);
 
         return true;
     }

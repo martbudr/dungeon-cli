@@ -158,7 +158,7 @@ class TutorialBuilder
 
     private bool IsWall(int x, int y)
     {
-        if (x < 0 || y < 0 || x >= GlobalConstants.WIDTH || y >= GlobalConstants.HEIGHT) 
+        if (!Board.IdxInRange(x, y)) 
             return false;
         return board.Grid[x, y] == GlobalConstants.WALL;
     }

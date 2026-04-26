@@ -1,10 +1,12 @@
+using game.Domain.Behaviors;
+using game.Domain.Entities;
 using Game.EquipStrategies;
 
 namespace Game;
 
 public static class ThemeRegistry
 {
-    public static DungeonTheme GetEarthTheme() => new DungeonTheme
+    public static DungeonTheme GetEarthTheme() => new()
     {
         Name = "Earthen Depths",
         WelcomeMessage = "The air is heavy, and the deep earth groans around you...",
@@ -20,9 +22,22 @@ public static class ThemeRegistry
             () => new Weapon("Claymore of Dust", 'c', new HeavyWeaponType(), new TwoHandedEquipStrategy())
         },
 
-        EnemyFactories = new List<Func<Enemy>> {
-            () => new Enemy("Stone Golem", 40, 10, 8),
-            () => new Enemy("Cave Crawler", 15, 12, 1)
+        EnemyFactories = new List<Func<GameContext, Enemy>> {
+            ctx => new Enemy(
+                "Stone Golem",
+                40, 10, 8,
+                EnemySpecies.Skeleton,
+                new SkeletonBehavior(),
+                ctx.Dispatcher,
+                ctx.Logger),
+
+            ctx => new Enemy(
+                "Earth Goblin",
+                15, 6, 1,
+                EnemySpecies.Goblin,
+                new GoblinBehavior(),
+                ctx.Dispatcher,
+                ctx.Logger)
         },
 
         ItemPool = new List<Func<IItem>> {
@@ -31,7 +46,7 @@ public static class ThemeRegistry
         }
     };
 
-    public static DungeonTheme GetAirTheme() => new DungeonTheme
+    public static DungeonTheme GetAirTheme() => new()
     {
         Name = "Howling Labyrinth",
         WelcomeMessage = "A sharp breeze whistles through the winding passages...",
@@ -46,19 +61,33 @@ public static class ThemeRegistry
             () => new Weapon("Feathered Dagger", 'd', new LightWeaponType(), new OneHandedEquipStrategy()),
             () => new Weapon("Whistling Spear", 's', new LightWeaponType(), new OneHandedEquipStrategy())
         },
+        
+        EnemyFactories = new List<Func<GameContext, Enemy>>
+        {
+            ctx => new Enemy(
+                "Wind Wraith",
+                20, 15, 0,
+                EnemySpecies.Skeleton,
+                new SkeletonBehavior(),
+                ctx.Dispatcher,
+                ctx.Logger),
 
-        EnemyFactories = new List<Func<Enemy>> {
-            () => new Enemy("Wind Wraith", 20, 15, 0),
-            () => new Enemy("Storm Harpy", 25, 10, 2)
+            ctx => new Enemy(
+                "Storm Harpy",
+                25, 10, 2,
+                EnemySpecies.Goblin,
+                new GoblinBehavior(),
+                ctx.Dispatcher,
+                ctx.Logger)
         },
-
+        
         ItemPool = new List<Func<IItem>> {
             () => new SimpleItem("Feather", 'f'),
             () => new SimpleItem("Cloud Essence", 'e')
         }
     };
 
-    public static DungeonTheme GetFireTheme() => new DungeonTheme
+    public static DungeonTheme GetFireTheme() => new()
     {
         Name = "Inferno Forge",
         WelcomeMessage = "Sweat stings your eyes. The walls are warm to the touch.",
@@ -73,10 +102,24 @@ public static class ThemeRegistry
             () => new Weapon("Obsidian Maul", 'm', new HeavyWeaponType(), new TwoHandedEquipStrategy()),
             () => new Weapon("Flame Whip", 'w', new LightWeaponType(), new OneHandedEquipStrategy())
         },
+        
+        EnemyFactories = new List<Func<GameContext, Enemy>>
+        {
+            ctx => new Enemy(
+                "Flame Skull",
+                15, 20, 0,
+                EnemySpecies.Skeleton,
+                new SkeletonBehavior(),
+                ctx.Dispatcher,
+                ctx.Logger),
 
-        EnemyFactories = new List<Func<Enemy>> {
-            () => new Enemy("Flame Skull", 15, 20, 0),
-            () => new Enemy("Magma Slime", 30, 8, 5)
+            ctx => new Enemy(
+                "Magma Slime",
+                30, 8, 5,
+                EnemySpecies.Goblin,
+                new GoblinBehavior(),
+                ctx.Dispatcher,
+                ctx.Logger)
         },
 
         ItemPool = new List<Func<IItem>> {

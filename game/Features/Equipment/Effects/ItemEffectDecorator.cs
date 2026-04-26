@@ -13,7 +13,8 @@ public abstract class ItemEffectDecorator : IItem, IEquippable
 
     public virtual string Name => _innerItem.Name;
     public virtual char Symbol => _innerItem.Symbol;
-    
+    public int Noise => _innerItem.Noise;
+
     public virtual AttackResult Calculate(Player player, IAttackHandler attack) 
         => _innerItem.Calculate(player, attack);
     

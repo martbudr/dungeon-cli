@@ -2,9 +2,9 @@ namespace Game;
 
 class MazeDungeonStrategy : DungeonStrategy
 {
-    public override void Build(Board board, DungeonTheme theme)
+    public override void Build(GameContext context, DungeonTheme theme)
     {
-        var builder = new DungeonBuilder(board);
+        var builder = new DungeonBuilder(context);
         builder.FilledDungeon();
 
         builder.GenerateMaze();
