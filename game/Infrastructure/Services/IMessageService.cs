@@ -1,4 +1,4 @@
-namespace Game.Services;
+namespace game.Infrastructure.Services;
 
 public interface IMessageService
 {

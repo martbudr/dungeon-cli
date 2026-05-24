@@ -1,8 +1,8 @@
-namespace Game.Services;
+namespace game.Infrastructure.Services;
 
 public class GameLogger : IMessageService
 {
-    private readonly List<string> _history = new();
+    private readonly List<string> history = new();
     public string FilePath { get; }
 
     public GameLogger(string playerName, string directory)
@@ -26,10 +26,9 @@ public class GameLogger : IMessageService
 
     public void ShowMessage(string message)
     {
-        string entry = $"[{DateTime.Now:HH:mm:ss}] {message}";
-        _history.Add(entry);
-        File.AppendAllLines(FilePath, [entry]);
+        history.Add(message);
+        File.AppendAllLines(FilePath, [message]);
     }
 
-    public List<string> GetHistory() => _history;
+    public List<string> GetHistory() => history;
 }

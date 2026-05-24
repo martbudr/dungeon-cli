@@ -8,10 +8,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="Common\" />
-      <Folder Include="Features\" />
-      <Folder Include="Infrastructure\" />
+      <Folder Include="Infrastructure\Logging\" />
       <Folder Include="Logs\" />
+      <Folder Include="Models\Domain\Rules\" />
     </ItemGroup>
 
 </Project>
