@@ -3,6 +3,7 @@ using game.Models.Common.Events;
 using game.Models.Domain.Entities.Board;
 using game.Models.Domain.Entities.Player;
 using game.Models.Domain.Rules.Combat;
+using game.Models.DTOs;
 using game.Models.Systems.Combat;
 
 namespace game.Controllers.Handlers;
@@ -11,28 +12,30 @@ class AttackHandler : InputHandler
 {
     private Player player;
     private Board board;
-    private readonly EventDispatcher dispatcher;
+    private readonly UiEventDispatcher uiDispatcher;
     private readonly CombatSystem combatSystem;
 
     // Czy jesteśmy w trybie oczekiwania na wybór ataku
     private bool waitingForAttackKey = false;
 
-    public AttackHandler(Player player, Board board,  EventDispatcher dispatcher, CombatSystem combatSystem)
+    public AttackHandler(Player player, Board board,  UiEventDispatcher uiDispatcher, CombatSystem combatSystem)
     {
         this.player = player;
         this.board = board;
-        this.dispatcher = dispatcher;
+        this.uiDispatcher = uiDispatcher;
         this.combatSystem = combatSystem;
     }
 
-    public override bool Handle(ConsoleKey key)
+    public override List<IUpdateDto> Handle(ConsoleKey key)
     {
+        var updates = new List<IUpdateDto>();
+        
         if (!waitingForAttackKey)
         {
             if (key == ConsoleKey.H) // klawisz inicjujący atak
             {
                 waitingForAttackKey = true;
-                return true;
+                return updates;
             }
 
             return base.Handle(key);
@@ -49,15 +52,19 @@ class AttackHandler : InputHandler
 
         if (attack != null)
         {
-            var enemy = board.GetEnemyAt(player.X, player.Y);
+            var x = player.Position.X;
+            var y = player.Position.Y;
+            
+            var enemy = board.GetEnemyAt(x, y);
             if (enemy != null)
             {
                 var result = combatSystem.ExecuteTurn(player, enemy, attack);
 
                 if (result == CombatResult.EnemyDied)
                 {
-                    board.Enemies[player.X, player.Y] = null;
-                    dispatcher.Publish(new GameMessageEvent("Enemy defeated!"));
+                    updates.Add(new EnemyDiedDto(enemy.Id, x, y));
+                    board.Enemies[x, y] = null;
+                    uiDispatcher.Publish(new DeathEvent(enemy.Name, false));
                 }
             }
 
@@ -65,9 +72,9 @@ class AttackHandler : InputHandler
         }
         else
         {
-            dispatcher.Publish(new GameMessageEvent("Invalid key! Press N, K, or M to attack."));
+            uiDispatcher.Publish(new InvalidAttackKeyEvent());
         }
 
-        return true;
+        return updates;
     }
 }

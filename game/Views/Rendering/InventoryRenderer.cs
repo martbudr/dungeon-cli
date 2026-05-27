@@ -10,9 +10,9 @@ public class InventoryRenderer
     public void Render(UIPanel p, Board board, Player player)
     {
         p.WriteTitle("FIELD INFO");
-        p.WriteLine($"Pos: {player.X}, {player.Y}");
+        p.WriteLine($"Pos: {player.Position.X}, {player.Position.Y}");
 
-        var enemy = board.Enemies[player.X, player.Y];
+        var enemy = board.Enemies[player.Position.X, player.Position.Y];
 
         if (enemy != null && enemy.IsAlive)
         {
@@ -28,7 +28,7 @@ public class InventoryRenderer
         p.SkipLine();
         p.WriteLine("Items here:");
 
-        var items = board.Items[player.X, player.Y];
+        var items = board.Items[player.Position.X, player.Position.Y];
         for (int i = 0; i < 3; i++)
             p.WriteLine(i < items.Count ? $" - {items[i].Name}" : " ");
 

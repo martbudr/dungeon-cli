@@ -1,23 +1,24 @@
 using game.Models.Common.Events;
+using game.Models.DTOs;
 
 namespace game.Controllers.Handlers;
 
 
 class UnknownHandler : InputHandler
 {
-    private readonly EventDispatcher dispatcher;
+    private readonly UiEventDispatcher uiDispatcher;
 
-    public UnknownHandler(EventDispatcher dispatcher)
+    public UnknownHandler(UiEventDispatcher uiDispatcher)
     {
-        this.dispatcher = dispatcher;
+        this.uiDispatcher = uiDispatcher;
     }
 
-    public override bool Handle(ConsoleKey key)
+    public override List<IUpdateDto> Handle(ConsoleKey key)
     {
         // Jeśli doszliśmy tutaj, oznacza to, że żaden wcześniejszy handler 
         // nie rozpoznał tego klawisza
-        dispatcher.Publish(new GameMessageEvent($"The key {key} does nothing here."));
+        uiDispatcher.Publish(new UnknownKeyEvent(key));
         
-        return true; 
+        return base.Handle(key);
     }
 }

@@ -1,11 +1,10 @@
-using game.Models.Domain.Entities;
+using Game.Effects;
 using game.Models.Domain.Entities.Items;
 using game.Models.Domain.Entities.Player;
 using game.Models.Domain.Equipment;
 using game.Models.Domain.Rules.Combat;
-using game.Models.Systems.Equipment;
 
-namespace Game.Effects;
+namespace game.Models.Systems.Equipment.Effects;
 
 public class LuckyEffect : ItemEffectDecorator, IStatModifier, IEquippable
 {

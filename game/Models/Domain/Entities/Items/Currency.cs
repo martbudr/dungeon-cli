@@ -7,6 +7,7 @@ namespace game.Models.Domain.Entities.Items;
 
 public class Currency : IItem
 {
+    public int Id { get; }
     public string Name { get; }
     public char Symbol { get; }
 
@@ -17,6 +18,7 @@ public class Currency : IItem
 
     public Currency(string name, char symbol, CurrencyType type, int value)
     {
+        Id = ItemIdGenerator.Next();
         Name = name;
         Symbol = symbol;
         this.type = type;

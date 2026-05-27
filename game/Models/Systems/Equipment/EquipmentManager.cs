@@ -1,4 +1,3 @@
-using Game;
 using game.Models.Common.Enums;
 using game.Models.Common.Events;
 using game.Models.Domain.Entities.Board;
@@ -12,8 +11,8 @@ public class EquipmentManager
 {
     private readonly Player player;
     private readonly PlayerStats stats;
-    private readonly EventDispatcher dispatcher;
-    public readonly Board board;
+    private readonly UiEventDispatcher uiDispatcher;
+    public readonly Board Board;
     
     public List<IItem> Inventory { get; } = new();
     public IItem? LeftHandItem { get; set; }
@@ -21,12 +20,12 @@ public class EquipmentManager
     public const int MaxInventorySlots = 10;
     public int SelectedItem = 0;
     
-    public EquipmentManager(Player player, PlayerStats stats, EventDispatcher dispatcher, Board board)
+    public EquipmentManager(Player player, PlayerStats stats, UiEventDispatcher uiDispatcher, Board board)
     {
         this.player = player;
         this.stats = stats;
-        this.dispatcher = dispatcher;
-        this.board = board;
+        this.uiDispatcher = uiDispatcher;
+        Board = board;
     }
 
     public void AddItem(IItem item)
@@ -52,7 +51,7 @@ public class EquipmentManager
         int noiseRange = GetNoiseForItem(item);
         if (noiseRange > 0)
         {
-            player.MakeNoise(noiseRange);
+            player.MakeNoise(noiseRange, Board);
         }
     }
 
@@ -72,18 +71,19 @@ public class EquipmentManager
 
             if (LeftHandItem == fullItem && RightHandItem == fullItem)
             {
-                dispatcher.Publish(new GameMessageEvent($"You take the {fullItem.Name} in your both hands."));
+                uiDispatcher.Publish(new ItemEquippedInHandEvent(fullItem.Name, HandType.Both));
             }
             else
             {
-                var hand = left ? "left" : "right";
-                dispatcher.Publish(new GameMessageEvent($"You take the {fullItem.Name} in your {hand} hand."));
+                uiDispatcher.Publish(new ItemEquippedInHandEvent(
+                    fullItem.Name,
+                    left ? HandType.Left : HandType.Right
+                ));
             }
         }
         else
         {
-            dispatcher.Publish(new GameMessageEvent("This item cannot be equipped."));
-        }
+            uiDispatcher.Publish(new ItemCannotBeEquippedEvent());        }
     }
 
     public void Unequip(bool left)
@@ -111,7 +111,7 @@ public class EquipmentManager
         if (index < 0 || index >= Inventory.Count)
             return;
 
-        items[player.X, player.Y].Add(Inventory[index]);
+        items[player.Position.X, player.Position.Y].Add(Inventory[index]);
         Inventory.RemoveAt(index);
     }
     

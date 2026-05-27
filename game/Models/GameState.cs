@@ -2,6 +2,7 @@ using game.Infrastructure.Services;
 using game.Models.Common.Events;
 using game.Models.Domain.Entities.Board;
 using game.Models.Domain.Entities.Player;
+using game.Models.DTOs.Player;
 using game.Models.Systems;
 using game.Models.Systems.Combat;
 using game.Models.Systems.WorldGeneration;
@@ -11,8 +12,9 @@ namespace game.Models;
 public class GameState
 {
     public Board Board { get; set; }
-    public Player Player { get; set; }
-    public EventDispatcher Dispatcher { get; }
+    public Dictionary<int, Player> Players { get; set; } = new();
+    public UiEventDispatcher UiDispatcher { get; }
+    public GameplayEventDispatcher GameplayDispatcher { get; }
     public IMessageService Logger { get; }
     public DungeonTheme Theme { get; }
     public bool ShouldExit { get; set; }
@@ -21,15 +23,16 @@ public class GameState
     public CombatSystem CombatSystem { get; }
     public EnemyMovementSystem EnemyMovement { get; }
 
-    public GameState(DungeonTheme theme, IMessageService logger, EventDispatcher dispatcher)
+    public GameState(DungeonTheme theme, IMessageService logger, UiEventDispatcher uiDispatcher, GameplayEventDispatcher gameplayDispatcher)
     {
         Theme = theme;
         Logger = logger;
 
-        Dispatcher = dispatcher;
+        UiDispatcher = uiDispatcher;
+        GameplayDispatcher = gameplayDispatcher;
         
-        DamageSystem = new DamageSystem(dispatcher);
-        CombatSystem = new CombatSystem(DamageSystem, dispatcher);
+        DamageSystem = new DamageSystem(uiDispatcher, gameplayDispatcher);
+        CombatSystem = new CombatSystem(DamageSystem, uiDispatcher, Board);
         
         EnemyMovement = new EnemyMovementSystem();
 

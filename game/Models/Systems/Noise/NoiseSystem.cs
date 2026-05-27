@@ -1,4 +1,5 @@
 using game.Models.Common.Events;
+using game.Models.Common.Events.Noise;
 using game.Models.Domain.Entities.Board;
 
 namespace game.Models.Systems.Noise;
@@ -6,14 +7,14 @@ namespace game.Models.Systems.Noise;
 public class NoiseSystem : IEventListener<NoiseEvent>, IDisposable
 {
     private readonly Board board;
-    private readonly EventDispatcher dispatcher;
+    private readonly UiEventDispatcher uiDispatcher;
     
-    public NoiseSystem(Board board, EventDispatcher dispatcher)
+    public NoiseSystem(Board board, UiEventDispatcher uiDispatcher)
     {
         this.board = board;
-        this.dispatcher = dispatcher;
+        this.uiDispatcher = uiDispatcher;
 
-        dispatcher.Subscribe(this);
+        uiDispatcher.Subscribe(this);
     }
     
     public void Handle(NoiseEvent noise)
@@ -24,14 +25,19 @@ public class NoiseSystem : IEventListener<NoiseEvent>, IDisposable
             if (enemy == null || !enemy.IsAlive)
                 continue;
              
-            dispatcher.Publish(new GameMessageEvent(
-                $"{enemy.Name} at ({x}, {y}) heard noise from ({noise.SourceX}, {noise.SourceY}) at {distance}"
+            uiDispatcher.Publish(new NoiseHeardEvent(
+                enemy.Name,
+                x,
+                y,
+                noise.SourceX,
+                noise.SourceY,
+                distance
             ));
         }
     }
 
     public void Dispose()
     {
-        dispatcher.Unsubscribe(this);
+        uiDispatcher.Unsubscribe(this);
     }
 }

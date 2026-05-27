@@ -1,28 +1,33 @@
-using Game;
 using Game.Effects;
 using game.Infrastructure.Services;
 using game.Models.Common.Events;
+using game.Models.Common.Events.Noise;
 using game.Models.Domain.Entities.Items;
-using game.Models.Domain.Equipment.Weapons;
 using game.Models.Domain.Rules.Combat;
-using game.Models.Systems;
 using game.Models.Systems.Equipment;
+using game.Models.Systems.Equipment.Effects;
 
 namespace game.Models.Domain.Entities.Player;
 
 public class Player : IDamageable
 {
-    public int X { get; private set; }
-    public int Y { get; private set; }
-
+    public int Id { get; }
+    public string Name { get; }
+    public Position Position { get; private set;  }
+    
     private readonly PlayerStats stats;
-    private readonly EventDispatcher dispatcher;
+    private readonly UiEventDispatcher uiDispatcher;
+    private readonly GameplayEventDispatcher gameplayDispatcher;
     private readonly EquipmentManager equipment;
     
     public bool IsAlive => stats.Health > 0;
+    public int Health => stats.Health;
     
     public int Coins => stats.Coins;
     public int Gold => stats.Gold;
+    
+    public void SetHealth(int health) => stats.SetHealth(health);
+    public void AddCoins(int amount) => stats.Coins += amount;
 
     public IItem? LeftHandItem
     {
@@ -48,23 +53,38 @@ public class Player : IDamageable
     public int Aggression => stats.BaseAggression + GetBonus(m => m.Aggression);
     public int Wisdom => stats.BaseWisdom + GetBonus(m => m.Wisdom);
     
-    public Player(EventDispatcher dispatcher, Board.Board board)
+    public Player(int playerId, string name, UiEventDispatcher uiDispatcher, GameplayEventDispatcher gameplayDispatcher, Board.Board board)
     {
-        this.dispatcher = dispatcher;
+        Id = playerId;
+        Name = name;
+        
+        this.uiDispatcher = uiDispatcher;
+        this.gameplayDispatcher = gameplayDispatcher;
         
         stats = new PlayerStats();
-        equipment = new EquipmentManager(this, stats, this.dispatcher, board);
+        equipment = new EquipmentManager(this, stats, this.uiDispatcher, board);
+    }
+
+    public void AddItem(IItem item)
+    {
+        equipment.AddItem(item);
+        
+    }
+    public void Equip(int index, bool left) => equipment.Equip(index, left);
+
+    public void Unequip(bool left)
+    {
+        equipment.Unequip(left);
+    } 
+
+    public void Drop(int index, List<IItem>[,] worldItems)
+    {
+        equipment.Drop(index, worldItems);
     }
     
-    public void AddItem(IItem item) => equipment.AddItem(item);
-    public void Equip(int index, bool left) => equipment.Equip(index, left);
-    public void Unequip(bool left) => equipment.Unequip(left);
-    public void Drop(int index, List<IItem>[,] worldItems) => equipment.Drop(index, worldItems);
-    
-    public void SetPosition(int x, int y)
+    public void SetPosition(Position newPosition)
     {
-        X = x;
-        Y = y;
+        Position = new Position(newPosition.X, newPosition.Y);
     }
     
     public Dictionary<string, int> GetCurrentStats()
@@ -125,27 +145,6 @@ public class Player : IDamageable
         return sum;
     }
     
-    public void Move(int dx, int dy, Board.Board board)
-    {
-        var nx = X + dx;
-        var ny = Y + dy;
-
-        if (!Board.Board.IdxInRange(nx, ny))
-        {
-            dispatcher.Publish(new GameMessageEvent("Trying to go outside the map."));
-            return;
-        }
-
-        if (board.IsWall(nx, ny))
-        {
-            dispatcher.Publish(new GameMessageEvent("Trying to bump into a wall."));
-            return;
-        }
-
-        SetPosition(nx, ny);
-        MakeNoise(NoiseProfile.Movement);
-    }
-    
     public AttackResult GetCombatStats(IAttackHandler? attack = null)
     {
         if (attack == null)
@@ -178,22 +177,22 @@ public class Player : IDamageable
     {
         var totalDefense = GetCombatStats(attack).Defense;
         var reducedDamage = Math.Max(baseDamage - totalDefense, 0);
-    
-        stats.Health -= reducedDamage;
+
+        stats.TakeDamage(reducedDamage);
         
         return (reducedDamage, totalDefense);
     }
     
-    public void MakeNoise(int range)
+    public Dictionary<(int x, int y), int>? MakeNoise(int range, Board.Board board)
     {
-        if(range <= 0) return;
+        if(range <= 0) return null;
         
         var service = new SoundPropagationService();
-        // Obliczamy zasięg raz
-        var reachedTiles = service.Propagate(equipment.board, X, Y, range);
-    
-        // Tworzymy zdarzenie z gotową mapą zasięgu
-        var noiseEvent = new NoiseEvent(X, Y, reachedTiles);
-        dispatcher.Publish(noiseEvent);
+        var reachedTiles = service.Propagate(board, Position.X, Position.Y, range);
+        
+        var noiseEvent = new NoiseEvent(Position.X, Position.Y, reachedTiles);
+        gameplayDispatcher.Publish(noiseEvent);
+
+        return reachedTiles;
     }
 }

@@ -1,6 +1,6 @@
 using game.Models.Domain.Entities;
 
-namespace game.Models.Common.Events;
+namespace game.Models.Common.Events.Combat;
 
 public class EnemyDeathEvent : IGameEvent
 {

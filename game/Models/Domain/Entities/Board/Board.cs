@@ -1,4 +1,5 @@
 using game.Models.Domain.Entities.Items;
+using game.Models.DTOs;
 
 namespace game.Models.Domain.Entities.Board;
 
@@ -23,6 +24,40 @@ public class Board
                 Items[i, j] = [];
                 Enemies[i, j] = null;
             }
+        }
+    }
+    
+    public void CopyFrom(BoardDto other)
+    {
+        enemyPositions.Clear();
+
+        for (int x = 0; x < GlobalConstants.HEIGHT; x++)
+        {
+            for (int y = 0; y < GlobalConstants.WIDTH; y++)
+            {
+                Grid[x, y] = other.Grid[x][y];
+
+                Items[x, y].Clear();
+                Enemies[x, y] = null;
+            }
+        }
+
+        foreach (var enemyDto in other.Enemies)
+        {
+            var enemy = enemyDto.ToDomain();
+
+            Enemies[enemy.Position.X, enemy.Position.Y] = enemy;
+
+            enemyPositions[enemy] =
+                (enemy.Position.X, enemy.Position.Y);
+        }
+
+        foreach (var itemDto in other.Items)
+        {
+            var item = itemDto.Item.ToDomain();
+
+            Items[itemDto.Position.X, itemDto.Position.Y]
+                .Add(item);
         }
     }
     
@@ -85,5 +120,69 @@ public class Board
     public bool IsWalkable(int x, int y)
     {
         return IdxInRange(x, y) && !IsWall(x, y);
+    }
+
+    public char[][] ConvertGrid()
+    {
+        int width = Grid.GetLength(0);
+        int height = Grid.GetLength(1);
+
+        var result = new char[width][];
+
+        for (int x = 0; x < width; x++)
+        {
+            result[x] = new char[height];
+            for (int y = 0; y < height; y++)
+            {
+                result[x][y] = Grid[x, y];
+            }
+        }
+
+        return result;
+    }
+    
+    public List<EnemyDto> ExportEnemies()
+    {
+        var result = new List<EnemyDto>();
+
+        for (int x = 0; x < Enemies.GetLength(0); x++)
+        {
+            for (int y = 0; y < Enemies.GetLength(1); y++)
+            {
+                var enemy = Enemies[x, y];
+                if (enemy != null)
+                {
+                    result.Add(enemy.ToDto());
+                }
+            }
+        }
+
+        return result;
+    }
+    
+    public List<BoardItemDto> ExportItems()
+    {
+        var result = new List<BoardItemDto>();
+
+        for (int x = 0; x < Items.GetLength(0); x++)
+        {
+            for (int y = 0; y < Items.GetLength(1); y++)
+            {
+                foreach (var item in Items[x, y])
+                {
+                    result.Add(new BoardItemDto
+                    {
+                        Item = item.ToDto(),
+                        Position = new PositionDto
+                        {
+                            X = x,
+                            Y = y
+                        }
+                    });
+                }
+            }
+        }
+
+        return result;
     }
 }

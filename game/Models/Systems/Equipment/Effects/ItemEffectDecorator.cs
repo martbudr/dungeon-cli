@@ -1,11 +1,10 @@
-using game.Models.Domain.Entities;
+using Game.Effects;
 using game.Models.Domain.Entities.Items;
 using game.Models.Domain.Entities.Player;
 using game.Models.Domain.Equipment;
 using game.Models.Domain.Rules.Combat;
-using game.Models.Systems.Equipment;
 
-namespace Game.Effects;
+namespace game.Models.Systems.Equipment.Effects;
 
 public abstract class ItemEffectDecorator : IItem, IEquippable
 {
@@ -19,6 +18,7 @@ public abstract class ItemEffectDecorator : IItem, IEquippable
     public virtual string Name => _innerItem.Name;
     public virtual char Symbol => _innerItem.Symbol;
     public int Noise => _innerItem.Noise;
+    public int Id => _innerItem.Id;
 
     public virtual AttackResult Calculate(Player player, IAttackHandler attack) 
         => _innerItem.Calculate(player, attack);

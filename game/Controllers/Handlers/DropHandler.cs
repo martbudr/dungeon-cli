@@ -1,7 +1,6 @@
-using Game;
-using game.Models.Domain.Entities;
 using game.Models.Domain.Entities.Board;
 using game.Models.Domain.Entities.Player;
+using game.Models.DTOs;
 
 namespace game.Controllers.Handlers;
 
@@ -16,14 +15,13 @@ class DropHandler : InputHandler
         this.board = board;
     }
 
-    public override bool Handle(ConsoleKey key)
+    public override List<IUpdateDto> Handle(ConsoleKey key)
     {
-        if (key == ConsoleKey.Q)
-        {
-            player.Drop(player.SelectedItem, board.Items);
-            return true;
-        }
-
+        var updates = new List<IUpdateDto>();
+        
+        if (key != ConsoleKey.Q) return base.Handle(key);
+        
+        player.Drop(player.SelectedItem, board.Items);
         return base.Handle(key);
     }
 }

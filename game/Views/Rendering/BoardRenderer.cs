@@ -12,7 +12,7 @@ public static class BoardRenderer
         {
             for (int j = 0; j < GlobalConstants.WIDTH; j++)
             {
-                if (i == player.X && j == player.Y)
+                if (i == player.Position.X && j == player.Position.Y)
                 {
                     Console.ForegroundColor = ConsoleColor.White;
                     Console.Write(GlobalConstants.PLAYER);

@@ -101,8 +101,8 @@ class TutorialBuilder
     private bool ShouldShowWallsTutorial()
     {
         // zwraca true jesli gracz soi obok sciany
-        int px = player.X;
-        int py = player.Y;
+        int px = player.Position.X;
+        int py = player.Position.Y;
 
         // Sprawdzamy sąsiednie pola (Góra, Dół, Lewo, Prawo)
         return IsWall(px + 1, py) || IsWall(px - 1, py) || 
@@ -112,7 +112,7 @@ class TutorialBuilder
     private bool ShouldShowPickupTutorial()
     {
         // tylko jesli na polu na ktorym gracz stoi sa jakies przedmioty
-        return board.Items[player.X, player.Y].Count != 0;
+        return board.Items[player.Position.X, player.Position.Y].Count != 0;
     }
     
     private bool ShouldShowEquipmentTutorial()
@@ -137,7 +137,7 @@ class TutorialBuilder
 
     private bool ShouldShowAttackTutorial()
     {
-        return board.Enemies[player.X, player.Y] is { IsAlive: true };
+        return board.Enemies[player.Position.X, player.Position.Y] is { IsAlive: true };
     }
     
     private bool HasEmptyTiles()

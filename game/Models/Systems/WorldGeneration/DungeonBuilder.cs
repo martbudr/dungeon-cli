@@ -1,5 +1,3 @@
-using Game;
-using Game.Effects;
 using game.Models.Domain.Entities;
 using game.Models.Domain.Entities.Board;
 using game.Models.Domain.Entities.Items;
@@ -252,7 +250,7 @@ class DungeonBuilder
         }
     }
     
-    public (int x, int y) FindRandomSafeSpot()
+    public Position FindRandomSafeSpot()
     {
         while (true)
         {
@@ -260,9 +258,8 @@ class DungeonBuilder
             int j = rng.Next(1, GlobalConstants.WIDTH - 1);
 
             if (board.Grid[i, j] == GlobalConstants.EMPTY)
-                return (i, j);
+                return new Position(i, j);
         }
-        return (0, 0);
     }
 
     private IItem ApplyRandomEffects(IItem item)

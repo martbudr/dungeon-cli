@@ -7,6 +7,7 @@ namespace game.Models.Domain.Entities.Items;
 
 public class Weapon : IItem, IEquippable
 {
+    public int Id { get; }
     public string Name { get; }
     public char Symbol { get; }
     
@@ -20,6 +21,7 @@ public class Weapon : IItem, IEquippable
         IWeaponType weaponType,
         IEquipStrategy equipStrategy)
     {
+        Id = ItemIdGenerator.Next();
         Name = name;
         Symbol = symbol;
         this.weaponType = weaponType;

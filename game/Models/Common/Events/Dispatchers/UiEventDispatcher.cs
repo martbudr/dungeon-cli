@@ -1,6 +1,6 @@
 namespace game.Models.Common.Events;
 
-public class EventDispatcher
+public class UiEventDispatcher
 {
     private readonly Dictionary<Type, List<object>> listeners = new();
 
@@ -31,14 +31,30 @@ public class EventDispatcher
 
     public void Publish<T>(T gameEvent) where T : IGameEvent
     {
-        var type = typeof(T);
+        var eventType = gameEvent.GetType();
 
-        if (!listeners.TryGetValue(type, out var registered))
-            return;
-
-        foreach (var listener in registered.Cast<IEventListener<T>>())
+        foreach (var (listenerType, registeredListeners) in listeners)
         {
-            listener.Handle(gameEvent);
+            if (!listenerType.IsAssignableFrom(eventType))
+                continue;
+
+            foreach (var listener in registeredListeners)
+            {
+                ((IEventListener<T>)listener).Handle(gameEvent);
+            }
         }
     }
+    
+    // public void Publish<T>(T gameEvent) where T : IGameEvent
+    // {
+    //     var type = typeof(T);
+    //
+    //     if (!listeners.TryGetValue(type, out var registered))
+    //         return;
+    //
+    //     foreach (var listener in registered.Cast<IEventListener<T>>())
+    //     {
+    //         listener.Handle(gameEvent);
+    //     }
+    // }
 }

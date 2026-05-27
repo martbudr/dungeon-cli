@@ -1,5 +1,5 @@
-using game.Models.Domain.Entities;
 using game.Models.Domain.Entities.Player;
+using game.Models.DTOs;
 
 namespace game.Controllers.Handlers;
 
@@ -12,17 +12,17 @@ class SelectionHandler : InputHandler
         this.player = player;
     }
 
-    public override bool Handle(ConsoleKey key)
+    public override List<IUpdateDto> Handle(ConsoleKey key)
     {
         switch (key)
         {
             case ConsoleKey.UpArrow:
                 player.SelectedItem = Math.Max(player.SelectedItem - 1, 0);
-                return true;
+                return null;
 
             case ConsoleKey.DownArrow:
                 player.SelectedItem = Math.Min(player.SelectedItem + 1, 9);
-                return true;
+                return null;
         }
 
         return base.Handle(key);

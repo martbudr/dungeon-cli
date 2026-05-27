@@ -2,7 +2,7 @@ namespace game.Infrastructure.Services;
 
 public class GameLogger : IMessageService
 {
-    private readonly List<string> history = new();
+    private readonly List<string> history = [];
     public string FilePath { get; }
 
     public GameLogger(string playerName, string directory)

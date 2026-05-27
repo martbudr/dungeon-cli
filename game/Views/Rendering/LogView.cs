@@ -8,13 +8,13 @@ public class LogView : IEventListener<GameMessageEvent>
     private readonly List<string> logs = [];
     private const int MaxLogs = 5;
     private readonly IMessageService externalLogger;
-    private readonly EventDispatcher dispatcher;
+    private readonly UiEventDispatcher uiDispatcher;
 
-    public LogView(EventDispatcher dispatcher, IMessageService externalLogger)
+    public LogView(UiEventDispatcher uiDispatcher, IMessageService externalLogger)
     {
         this.externalLogger = externalLogger;
-        this.dispatcher = dispatcher;
-        this.dispatcher.Subscribe(this);
+        this.uiDispatcher = uiDispatcher;
+        this.uiDispatcher.Subscribe(this);
     }
 
     public void Handle(GameMessageEvent gameEvent)
@@ -37,7 +37,7 @@ public class LogView : IEventListener<GameMessageEvent>
         foreach (var log in logsToDisplay)
         {
             // Wypisujemy logi
-            p.WriteLine($"> {log}", ConsoleColor.Gray);
+            p.WriteLine($"> {log}");
         }
 
         // Dopełnienie do stałej wysokości 5 linii
@@ -51,6 +51,6 @@ public class LogView : IEventListener<GameMessageEvent>
     
     public void Dispose()
     {
-        dispatcher.Unsubscribe(this);
+        uiDispatcher.Unsubscribe(this);
     }
 }

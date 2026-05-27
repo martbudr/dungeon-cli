@@ -1,16 +1,14 @@
-using Game.EquipStrategies;
-using game.Models.Domain.Entities;
-using game.Models.Domain.Entities.Items;
-using game.Models.Domain.Entities.Player;
+using Game;
 using game.Models.Domain.Equipment;
 using game.Models.Domain.Equipment.Weapons;
 using game.Models.Domain.Rules.Combat;
 using game.Models.Systems.Equipment;
 
-namespace Game;
+namespace game.Models.Domain.Entities.Items;
 
 public class SimpleItem : IItem, IEquippable
 {
+    public int Id { get; }
     public string Name { get; }
     public char Symbol { get; }
     
@@ -24,21 +22,22 @@ public class SimpleItem : IItem, IEquippable
         IWeaponType? weaponType = null,
         IEquipStrategy? equipStrategy = null)
     {
+        Id = ItemIdGenerator.Next();
         Name = name;
         Symbol = symbol;
         this.weaponType = weaponType ?? new NoWeaponType();
         EquipStrategy = equipStrategy ?? new OneHandedEquipStrategy();
     }
     
-    public AttackResult Calculate(Player player, IAttackHandler attack)
+    public AttackResult Calculate(Player.Player player, IAttackHandler attack)
         => weaponType.ResolveAttack(attack, player);
 
-    public void Equip(Player player, bool left)
+    public void Equip(Player.Player player, bool left)
     {
         EquipStrategy.Equip(player, this, left);
     }
 
-    public void Unequip(Player player, bool left)
+    public void Unequip(Player.Player player, bool left)
     {
         EquipStrategy.Unequip(player, this, left);
     }

@@ -20,13 +20,13 @@ public class NpcController
             }
         }
         
-        // 2. Wykonaj logikę dla każdego przeciwnika
+        // Wykonaj logikę dla każdego przeciwnika
         foreach (var enemy in enemiesList)
         {
             state.EnemyMovement.MoveRandomly(
                 state.Board, 
                 enemy, 
-                (x, y) => state.Player.X == x && state.Player.Y == y
+                (x, y) => state.Players.Any(p => p.Value.Position.X == x && p.Value.Position.Y == y)
                 );
         }
     }

@@ -5,6 +5,7 @@ using game.Models.Domain.Entities;
 using game.Models.Domain.Entities.Items;
 using game.Models.Domain.Equipment.Weapons;
 using game.Models.Systems.Behaviors;
+using game.Models.Systems.Equipment;
 using game.Models.Systems.WorldGeneration;
 
 namespace Game;
@@ -32,16 +33,14 @@ public static class ThemeRegistry
                 "Stone Golem",
                 40, 10, 8,
                 EnemySpecies.Skeleton,
-                new SkeletonBehavior(),
-                ctx.Dispatcher
+                new SkeletonBehavior()
                 ),
 
             ctx => new Enemy(
                 "Earth Goblin",
                 15, 6, 1,
                 EnemySpecies.Goblin,
-                new GoblinBehavior(),
-                ctx.Dispatcher
+                new GoblinBehavior()
                 )
         },
 
@@ -73,16 +72,14 @@ public static class ThemeRegistry
                 "Wind Wraith",
                 20, 15, 0,
                 EnemySpecies.Skeleton,
-                new SkeletonBehavior(),
-                ctx.Dispatcher
+                new SkeletonBehavior()
                 ),
 
             ctx => new Enemy(
                 "Storm Harpy",
                 25, 10, 2,
                 EnemySpecies.Goblin,
-                new GoblinBehavior(),
-                ctx.Dispatcher
+                new GoblinBehavior()
                 )
         },
         
@@ -114,16 +111,14 @@ public static class ThemeRegistry
                 "Flame Skull",
                 15, 20, 0,
                 EnemySpecies.Skeleton,
-                new SkeletonBehavior(),
-                ctx.Dispatcher
+                new SkeletonBehavior()
                 ),
 
             ctx => new Enemy(
                 "Magma Slime",
                 30, 8, 5,
                 EnemySpecies.Goblin,
-                new GoblinBehavior(),
-                ctx.Dispatcher
+                new GoblinBehavior()
                 )
         },
 

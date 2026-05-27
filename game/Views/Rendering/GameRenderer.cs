@@ -17,9 +17,9 @@ public class GameRenderer : IDisposable
     private readonly LogView logView;
     private readonly DetailsRenderer detailsRenderer = new();
     
-    public GameRenderer(EventDispatcher dispatcher, IMessageService logger)
+    public GameRenderer(UiEventDispatcher uiDispatcher, IMessageService logger)
     {
-        logView = new LogView(dispatcher, logger);
+        logView = new LogView(uiDispatcher, logger);
     }
 
     public void Draw(Board board, Player player, List<string> tutorialInstructions)

@@ -1,4 +1,4 @@
-namespace game.Models.Common.Events;
+namespace game.Models.Common.Events.Noise;
 
 public class NoiseEvent : IGameEvent
 {

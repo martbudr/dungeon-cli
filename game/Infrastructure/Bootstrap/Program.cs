@@ -5,7 +5,7 @@ namespace game.Infrastructure.Bootstrap;
 
 class Program
 {
-    static void Main()
+    static void Main(string[] args)
     {
         Console.Title = "Dungeon Crawler";
         Console.CursorVisible = false;
@@ -31,22 +31,95 @@ class Program
             // W razie błędu w JSONie (np. błąd składni) używamy domyślnych wartości
             config = new GameConfig();
         }
-
+        
+        // server vs client
+        string targetIp = "127.0.0.1";
+        int targetPort = 5555;
+        
+        if (args.Length == 0)
+        {
+            ShowUsage();
+            return;
+        }
+        
         try
         {
-            Game game = new Game(config);
-            game.Run();
-        }
-        catch (Exception ex)
+            switch (args[0].ToLower())
+            {
+                case "--server":
+                {
+                    if (args.Length > 1 &&
+                        int.TryParse(args[1], out int p))
+                    {
+                        targetPort = p;
+                    }
+
+                    Console.Title =
+                        $"Dungeon Crawler SERVER ({targetPort})";
+                    
+                    var game = new GameServer(config, targetPort);
+
+                    game.Run();
+
+                    break;
+                }
+
+                case "--client":
+                {
+                    if (args.Length > 1)
+                    {
+                        var parts = args[1].Split(':');
+
+                        targetIp = parts[0];
+
+                        if (parts.Length > 1 &&
+                            int.TryParse(parts[1], out int p))
+                        {
+                            targetPort = p;
+                        }
+                    }
+
+                    Console.Title =
+                        $"Dungeon Crawler CLIENT ({targetIp}:{targetPort})";
+
+                    using var game =
+                        new GameClient(config, targetIp, targetPort);
+
+                    game.Run();
+
+                    break;
+                }
+
+                default:
+                {
+                    ShowUsage();
+                    break;
+                }
+            }
+        }catch (Exception ex)
         {
             Console.Clear();
-            Console.WriteLine("A fatal error occurred during gameplay:");
+
+            Console.ForegroundColor = ConsoleColor.Red;
+
+            Console.WriteLine("A fatal error occurred:");
             Console.WriteLine(ex.Message);
+            Console.WriteLine(ex.StackTrace);
+
+            Console.ResetColor();
+
             Console.ReadKey();
         }
         finally
         {
-            Console.CursorVisible = true; // Przywracamy kursor przy wyjściu
+            Console.CursorVisible = true;
         }
+    }
+    
+    static void ShowUsage()
+    {
+        Console.WriteLine("Usage:");
+        Console.WriteLine("  --server [port]");
+        Console.WriteLine("  --client [ip:port]");
     }
 }

@@ -1,7 +1,6 @@
 using game.Models.Common.Enums;
-using game.Models.Common.Events;
 using game.Models.Domain.Rules.Combat;
-using game.Models.Systems;
+using game.Models.DTOs;
 using game.Models.Systems.Behaviors;
 
 namespace game.Models.Domain.Entities;
@@ -9,7 +8,9 @@ namespace game.Models.Domain.Entities;
 public class Enemy : IDamageable
 {
     private static readonly Random Rand = new();
+    private static int _nextId = 1;
     
+    public int Id { get; }
     public string Name { get; }
     public Position Position { get; set; }
     public int Health { get; set; }
@@ -19,8 +20,6 @@ public class Enemy : IDamageable
     private readonly IEnemyBehavior behavior;
 
     public bool IsAlive => Health > 0;
-    
-    private readonly EventDispatcher dispatcher;
 
     public Enemy(
         string name, 
@@ -28,10 +27,10 @@ public class Enemy : IDamageable
         int attack, 
         int armor, 
         EnemySpecies species, 
-        IEnemyBehavior behavior, 
-        EventDispatcher dispatcher
+        IEnemyBehavior behavior
         )
     {
+        Id =  _nextId++;
         Name = name;
         Health = health;
         Damage = attack;
@@ -39,7 +38,24 @@ public class Enemy : IDamageable
         Species = species;
         
         this.behavior = behavior;
-        this.dispatcher = dispatcher;
+    }
+    
+    public EnemyDto ToDto()
+    {
+        return new EnemyDto
+        {
+            Id = Id,
+            Name = Name,
+            Health = Health,
+            Damage = Damage,
+            Armor = Armor,
+            Species = Species.ToString(),
+            Position = new PositionDto
+            {
+                X = Position.X,
+                Y = Position.Y
+            }
+        };
     }
 
     public (int reduced, int armor) TakeDamage(int damage, IAttackHandler? attack = null)

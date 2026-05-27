@@ -1,10 +1,9 @@
-using game.Models.Domain.Entities;
+using Game.EquipStrategies;
 using game.Models.Domain.Entities.Items;
 using game.Models.Domain.Entities.Player;
 using game.Models.Domain.Equipment;
-using game.Models.Systems.Equipment;
 
-namespace Game.EquipStrategies;
+namespace game.Models.Systems.Equipment;
 
 public class OneHandedEquipStrategy : IEquipStrategy
 {

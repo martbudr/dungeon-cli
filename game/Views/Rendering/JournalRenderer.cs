@@ -1,6 +1,6 @@
 namespace game.Views.Rendering;
 
-public class JournalRenderer
+public static class JournalRenderer
 {
     public static void Draw(List<string> history)
     {

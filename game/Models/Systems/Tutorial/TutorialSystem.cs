@@ -4,9 +4,10 @@ public class TutorialSystem
 {
     private readonly TutorialBuilder builder;
     
-    public TutorialSystem(GameState state)
+    public TutorialSystem(GameState state, int playerId)
     {
-        builder = new TutorialBuilder(state.Board, state.Player);
+        var player = state.Players[playerId];
+        builder = new TutorialBuilder(state.Board, player);
     }
 
     public List<string> Get()

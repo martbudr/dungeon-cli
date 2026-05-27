@@ -1,3 +1,5 @@
+using game.Models.DTOs;
+
 namespace game.Controllers.Handlers;
 
 abstract class InputHandler
@@ -10,11 +12,11 @@ abstract class InputHandler
         return nextHandler;
     }
 
-    public virtual bool Handle(ConsoleKey key)
+    public virtual List<IUpdateDto> Handle(ConsoleKey key)
     {
         if (next != null)
             return next.Handle(key);
 
-        return false;
+        return new List<IUpdateDto>();
     }
 }

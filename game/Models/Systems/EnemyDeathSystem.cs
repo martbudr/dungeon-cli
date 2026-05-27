@@ -1,4 +1,5 @@
 using game.Models.Common.Events;
+using game.Models.Common.Events.Combat;
 using game.Models.Domain.Entities;
 
 namespace game.Models.Systems;
@@ -6,14 +7,14 @@ namespace game.Models.Systems;
 public class EnemyDeathSystem : IEventListener<EnemyDeathEvent>, IDisposable
 {
     private readonly IEnumerable<Enemy> enemies;
-    private readonly EventDispatcher dispatcher;
+    private readonly GameplayEventDispatcher gameplayDispatcher;
 
-    public EnemyDeathSystem(IEnumerable<Enemy> enemies, EventDispatcher dispatcher)
+    public EnemyDeathSystem(IEnumerable<Enemy> enemies, GameplayEventDispatcher gameplayDispatcher)
     {
         this.enemies = enemies;
-        this.dispatcher = dispatcher;
+        this.gameplayDispatcher = gameplayDispatcher;
         
-        dispatcher.Subscribe(this);
+        gameplayDispatcher.Subscribe(this);
     }
     
     public void Handle(EnemyDeathEvent death)
@@ -37,6 +38,6 @@ public class EnemyDeathSystem : IEventListener<EnemyDeathEvent>, IDisposable
     
     public void Dispose()
     {
-        dispatcher.Unsubscribe(this);
+        gameplayDispatcher.Unsubscribe(this);
     }
 }

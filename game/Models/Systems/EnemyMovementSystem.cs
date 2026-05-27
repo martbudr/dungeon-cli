@@ -7,14 +7,14 @@ public class EnemyMovementSystem
 {
     private readonly Random rand = new();
     
-    public void MoveRandomly(Board board, Enemy enemy, Func<int, int, bool> isPlayer)
+    public void MoveRandomly(Board board, Enemy enemy, Func<int, int, bool> hasPlayer)
     {
         if (!enemy.IsAlive)
             return;
 
         var (x, y) = enemy.Position;
 
-        if (isPlayer(x, y))
+        if (hasPlayer(x, y))
             return;
         
         var directions = new (int dx, int dy)[]
