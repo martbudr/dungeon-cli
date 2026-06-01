@@ -5,7 +5,7 @@ namespace game.Infrastructure.Bootstrap;
 
 class Program
 {
-    static void Main(string[] args)
+    static async Task Main(string[] args)
     {
         Console.Title = "Dungeon Crawler";
         Console.CursorVisible = false;
@@ -85,7 +85,7 @@ class Program
                     using var game =
                         new GameClient(config, targetIp, targetPort);
 
-                    game.Run();
+                    await game.Run();
 
                     break;
                 }

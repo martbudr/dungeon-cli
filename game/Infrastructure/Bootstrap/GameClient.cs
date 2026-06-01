@@ -13,6 +13,7 @@ class GameClient : IDisposable
     private readonly GameRenderer renderer;
     private readonly ClientNetworkSession network;
     private readonly ClientGameState clientState;
+    private readonly UiListener uiListener;
 
     private int localPlayerId;
 
@@ -31,7 +32,7 @@ class GameClient : IDisposable
         renderer = new GameRenderer(uiDispatcher, clientState.Logger);
         network = new ClientNetworkSession(ip, port);
 
-        var uiListener = new UiListener(uiDispatcher);
+        uiListener = new UiListener(uiDispatcher);
 
         disposables.Add(renderer);
         disposables.Add(uiListener);
@@ -41,15 +42,19 @@ class GameClient : IDisposable
     public async Task Run()
     {
         network.Start();
-
-        var snapshotTask = network.WaitForInitialSnapshot();
-        var assignmentTask = network.WaitForPlayerAssignment();        
         
-        var snapshot = await snapshotTask;
-        var assignment = await assignmentTask;
+        var snapshot = await network
+            .WaitForInitialSnapshot()
+            .WaitAsync(TimeSpan.FromSeconds(10));
+
+        var assignment = await network
+            .WaitForPlayerAssignment()
+            .WaitAsync(TimeSpan.FromSeconds(10));
         
         clientState.ApplySnapshot(snapshot);
         localPlayerId = assignment.PlayerId;
+        
+        Console.WriteLine("[CLIENT] Handshake complete. Starting game loop...");
 
         try
         {
@@ -85,8 +90,13 @@ class GameClient : IDisposable
                 }
             }
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[CLIENT] Game loop crashed: {ex.Message}");
+        }
         finally
         {
+            Console.WriteLine("[CLIENT] Shutdown()");
             Shutdown();
         }
     }
@@ -125,21 +135,22 @@ class GameClient : IDisposable
 
         cts.Cancel();
 
-        try
+        foreach (var disposable in disposables)
         {
-            network.Dispose();
+            SuppressDispose(disposable);
         }
-        catch { }
-
-        foreach (var d in disposables)
-        {
-            try { d.Dispose(); }
-            catch { }
-        }
+        disposables.Clear();
+        SuppressDispose(cts);
+    }
+    
+    private static void SuppressDispose(IDisposable? resource)
+    {
+        try { resource?.Dispose(); } catch { }
     }
 
     public void Dispose()
     {
+        Console.WriteLine("[CLIENT] Dispose()");
         Shutdown();
     }
 }

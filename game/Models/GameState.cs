@@ -1,8 +1,8 @@
+using System.Collections.Concurrent;
 using game.Infrastructure.Services;
 using game.Models.Common.Events;
 using game.Models.Domain.Entities.Board;
 using game.Models.Domain.Entities.Player;
-using game.Models.DTOs.Player;
 using game.Models.Systems;
 using game.Models.Systems.Combat;
 using game.Models.Systems.WorldGeneration;
@@ -12,7 +12,7 @@ namespace game.Models;
 public class GameState
 {
     public Board Board { get; set; }
-    public Dictionary<int, Player> Players { get; set; } = new();
+    public ConcurrentDictionary<int, Player> Players { get; set; } = new();
     public UiEventDispatcher UiDispatcher { get; }
     public GameplayEventDispatcher GameplayDispatcher { get; }
     public IMessageService Logger { get; }

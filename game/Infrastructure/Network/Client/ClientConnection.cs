@@ -1,9 +1,11 @@
 using System.Net.Sockets;
+using game.Models.Common.Enums;
 
 namespace game.Infrastructure.Network.Client;
 
 class ClientConnection
 {
+    public ConnectionState State;
     public TcpClient Tcp { get; }
     public StreamReader Reader { get; }
     public StreamWriter Writer { get; }
@@ -12,10 +14,14 @@ class ClientConnection
     public int PlayerId { get; set; }
 
     public TaskCompletionSource ReadyTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
-    public bool Disconnected { get; set; } = false;
+
+    public bool HandshakeComplete = false;
+    private int _disconnected;
+    public bool Disconnected => _disconnected != 0;
 
     public ClientConnection(TcpClient tcp)
     {
+        State = ConnectionState.Connecting;
         Tcp = tcp;
         var stream = tcp.GetStream();
 
@@ -23,8 +29,20 @@ class ClientConnection
         Writer = new StreamWriter(stream) { AutoFlush = true };
     }
     
+    public bool TryMarkDisconnected()
+    {
+        return Interlocked.Exchange(ref _disconnected, 1) == 0;
+    }
+    
     public void Close()
     {
-        try { Tcp.Close(); } catch { }
+        if (!TryMarkDisconnected())
+            return;
+        
+        State = ConnectionState.Disconnected;
+
+        try { Writer.Dispose(); } catch {}
+        try { Reader.Dispose(); } catch {}
+        try { Tcp.Close(); } catch {}
     }
 }

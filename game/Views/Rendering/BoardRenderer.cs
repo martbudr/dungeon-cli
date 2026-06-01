@@ -15,7 +15,7 @@ public static class BoardRenderer
                 if (i == player.Position.X && j == player.Position.Y)
                 {
                     Console.ForegroundColor = ConsoleColor.White;
-                    Console.Write(GlobalConstants.PLAYER);
+                    Console.Write(player.Id);
                 }
                 else if (board.Enemies[i, j]?.IsAlive == true)
                 {

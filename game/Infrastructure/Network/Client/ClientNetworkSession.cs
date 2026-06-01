@@ -17,6 +17,8 @@ public class ClientNetworkSession : IDisposable
 
     private readonly TaskCompletionSource<GameStateDto> snapshotTcs = new();
     private readonly TaskCompletionSource<PlayerAssignmentDto> assignmentTcs = new();
+    
+    private Task? receiveTask;
 
     public ClientNetworkSession(string ip, int port)
     {
@@ -30,17 +32,9 @@ public class ClientNetworkSession : IDisposable
 
     public void Start()
     {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await ReceiveLoop();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("[CLIENT RECEIVELOOP CRASH] " + ex);
-            }
-        });
+        Console.WriteLine("[CLIENT] Start() called");
+        
+        receiveTask = ReceiveLoop();
 
         SendReady(); // send immediately
     }
@@ -56,6 +50,8 @@ public class ClientNetworkSession : IDisposable
 
     private async Task ReceiveLoop()
     {
+        Console.WriteLine("[CLIENT] ReceiveLoop ENTERED");
+        
         try
         {
             while (!cts.IsCancellationRequested)
@@ -64,6 +60,7 @@ public class ClientNetworkSession : IDisposable
                 
                 try
                 {
+                    Console.WriteLine("[CLIENT] waiting for line...");
                     line = await reader.ReadLineAsync();
                 }
                 catch (OperationCanceledException)
@@ -79,6 +76,7 @@ public class ClientNetworkSession : IDisposable
                 try
                 {
                     msg = JsonSerializer.Deserialize<NetMessage>(line);
+                    Console.WriteLine($"[CLIENT] RX: {msg.Type}");
                 }
                 catch (Exception ex)
                 {
@@ -95,6 +93,7 @@ public class ClientNetworkSession : IDisposable
                         snapshotTcs.TrySetResult(
                             SafeDeserialize<GameStateDto>(msg.Data)!
                         );
+                        Console.WriteLine("[CLIENT] snapshot received");
                         break;
 
                     case "player_assigned":
@@ -184,13 +183,14 @@ public class ClientNetworkSession : IDisposable
 
     public void Dispose()
     {
+        Console.WriteLine("[CLIENT] Dispose()");
         cts.Cancel();
 
-        try { client.Close(); } catch { }
+        // try { client.Close(); } catch { }
 
+        client.Dispose();
         reader.Dispose();
         writer.Dispose();
-        client.Dispose();
 
         cts.Dispose();
     }

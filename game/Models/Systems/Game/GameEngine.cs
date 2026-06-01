@@ -3,7 +3,9 @@ using game.Controllers.Handlers;
 using game.Models.Common.Events;
 using game.Models.Common.Events.Combat;
 using game.Models.Domain.Entities;
+using game.Models.Domain.Entities.Player;
 using game.Models.DTOs;
+using game.Models.DTOs.Player;
 using game.Models.Systems.Noise;
 using game.Models.Systems.Tutorial;
 
@@ -19,6 +21,7 @@ public class GameEngine
     public readonly EnemyDeathSystem EnemyDeathSystem;
     
     private readonly Dictionary<Type, Action<IUpdateDto>> _updateHandlers;
+    private readonly Random rng = new();
     
     public GameEngine(GameState state)
     {
@@ -37,7 +40,7 @@ public class GameEngine
 
         var updates = inputController.HandleInput(player, playerInput.Key);
 
-        ApplyUpdates(updates); // <- NOWE JEDYNE MIEJSCE APPLY
+        ApplyUpdates(updates); 
 
         if (player.IsAlive && inputController.EndsTurn(playerInput.Key))
         {
@@ -45,6 +48,25 @@ public class GameEngine
         }
 
         return updates;
+    }
+    
+    public void AddPlayer(PlayerJoinDto join)
+    {
+        var safeSpot = FindSafeSpawn();
+
+        var player = new Player(
+            join.PlayerId,
+            join.Name,
+            State.UiDispatcher,
+            State.GameplayDispatcher,
+            State.Board
+        );
+
+        player.SetPosition(safeSpot);
+
+        State.Players[player.Id] = player;
+        
+        Console.WriteLine($"[ENGINE] {player.Name} spawned");
     }
     
     private void ApplyUpdates(List<IUpdateDto> updates)
@@ -78,5 +100,30 @@ public class GameEngine
     {
         var tutorial = new TutorialSystem(State, playerId);
         return tutorial.Get();
+    }
+    
+    public Position FindSafeSpawn()
+    {
+        for (int attempt = 0; attempt < 1000; attempt++)
+        {
+            int i = rng.Next(1, GlobalConstants.HEIGHT - 1);
+            int j = rng.Next(1, GlobalConstants.WIDTH - 1);
+
+            if (State.Board.Grid[i, j] != GlobalConstants.EMPTY)
+                continue;
+
+            if (State.Board.Enemies[i, j] != null)
+                continue;
+
+            if (State.Board.Items[i, j].Count > 0)
+                continue;
+
+            if (State.Players.Values.Any(p => p.Position.X == i && p.Position.Y == j))
+                continue;
+
+            return new Position(i, j);
+        }
+
+        throw new Exception("No safe spawn found");
     }
 }

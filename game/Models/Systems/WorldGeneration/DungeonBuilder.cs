@@ -249,18 +249,6 @@ class DungeonBuilder
             }
         }
     }
-    
-    public Position FindRandomSafeSpot()
-    {
-        while (true)
-        {
-            int i = rng.Next(1, GlobalConstants.HEIGHT - 1);
-            int j = rng.Next(1, GlobalConstants.WIDTH - 1);
-
-            if (board.Grid[i, j] == GlobalConstants.EMPTY)
-                return new Position(i, j);
-        }
-    }
 
     private IItem ApplyRandomEffects(IItem item)
     {

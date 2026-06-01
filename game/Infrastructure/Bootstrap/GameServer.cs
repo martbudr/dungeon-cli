@@ -1,10 +1,12 @@
 using Game;
+using game.Infrastructure.Network;
 using game.Infrastructure.Network.Server;
 using game.Infrastructure.Services;
 using game.Models;
 using game.Models.Common.Events;
 using game.Models.Domain.Entities.Board;
 using game.Models.DTOs;
+using game.Models.DTOs.Player;
 using game.Models.Systems.Game;
 
 namespace game.Infrastructure.Bootstrap;
@@ -59,12 +61,23 @@ class GameServer : IDisposable
             {
                 List<IUpdateDto> totalUpdates = [];
 
-                while (network.TryDequeueInput() is { } input)
+                while (network.TryDequeueInput() is IGameInput input)
                 {
-                    var inputUpdates = engine.ProcessInput(input);
-                    if (inputUpdates != null)
+                    switch (input)
                     {
-                        totalUpdates.AddRange(inputUpdates);
+                        case PlayerInputDto move:
+                            engine.ProcessInput(move);
+                            break;
+                    }
+                }
+                
+                while (network.TryDequeueSystemInput() is IGameInput system)
+                {
+                    switch (system)
+                    {
+                        case PlayerJoinDto join:
+                            engine.AddPlayer(join);
+                            break;
                     }
                 }
                 
