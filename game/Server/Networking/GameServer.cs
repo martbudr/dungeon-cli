@@ -1,0 +1,146 @@
+using game.Models;
+using game.Server.Bridges;
+using game.Server.Commands;
+using game.Server.Models.Core;
+using game.Server.Models.Entities.Board;
+using game.Server.Models.Systems.Game;
+using game.Server.Services;
+using game.Shared.DTOs.Patch;
+using game.Shared.Events.Dispatchers;
+using game.Shared.Events.UI;
+
+namespace game.Server.Networking;
+
+class GameServer : IDisposable
+{
+    private GameState state;
+    private readonly ServerNetworkSession network;
+    private GameContext context;
+
+    private readonly GameEngine engine;
+
+    private readonly List<IDisposable> disposables = [];
+
+    private readonly CancellationTokenSource cts = new();
+    private bool disposed;
+
+    public GameServer(GameConfig config, int port)
+    {
+        var uiDispatcher = new UiEventDispatcher();
+        var gameplayDispatcher = new GameplayEventDispatcher();
+        
+        var logger = new GameLogger(
+            config.PlayerName,
+            config.LogDirectory
+        );
+
+        var theme = ThemeRegistry.GetRandomTheme();
+
+        var board = new Board();
+        
+        var state = new GameState(board);
+        
+        theme.Style.Build(state, theme);
+        
+        var systems = new GameSystems(
+            board,
+            uiDispatcher,
+            gameplayDispatcher
+        );
+        
+        context = new GameContext(
+            state,
+            systems,
+            logger,
+            uiDispatcher,
+            gameplayDispatcher,
+            theme
+        );
+        
+        engine = new GameEngine(context);
+        network = new ServerNetworkSession(port, state);
+
+        RegisterDisposable(network);
+        RegisterDisposable(engine.NoiseSystem);
+        RegisterDisposable(engine.EnemyDeathSystem);
+    }
+
+    public void Run()
+    {
+        network.Start();
+
+        try
+        {
+            while (!context.State.ShouldExit && !cts.IsCancellationRequested)
+            {
+                List<IGamePatch> totalPatches = [];
+                
+                while (network.TryDequeueCommand() is IGameCommand cmd)
+                {
+                    switch (cmd)
+                    {
+                        case PlayerJoinCommand join:
+                            engine.AddPlayer(join.Dto);
+                            network.FinalizePlayerJoin(join.Connection);
+                            
+                            var welcomePatches = UiEventBridge.PublishAndPatch(
+                                new GameStartedEvent(context.Theme.WelcomeMessage), 
+                                context.UiDispatcher
+                            );
+                            totalPatches.AddRange(welcomePatches);
+                            break;
+
+                        case PlayerInputCommand input:
+                            totalPatches.AddRange(engine.ProcessInput(input.Dto));
+                            break;
+                    }
+                }
+
+                if (context.Patches.Count > 0)
+                {
+                    totalPatches.AddRange(context.Patches);
+                    context.Patches.Clear();
+                }
+                
+                if (totalPatches.Count > 0)
+                {
+                    network.Broadcast(new GameTickUpdateDto{Patches = totalPatches});
+                }
+
+                Thread.Sleep(50);
+            }
+        }
+        finally
+        {
+            Shutdown();
+        }
+    }
+
+    private void Shutdown()
+    {
+        if (cts.IsCancellationRequested)
+            return;
+
+        cts.Cancel();
+        
+        context.State.ShouldExit = true;
+        
+        network.Dispose();
+        
+        foreach (var d in disposables)
+        {
+            try { d.Dispose(); }
+            catch { /* ignore shutdown exceptions */ }
+        }
+    }
+
+    protected void RegisterDisposable(IDisposable disposable)
+    {
+        disposables.Add(disposable);
+    }
+
+    public void Dispose()
+    {
+        Shutdown();
+    }
+}

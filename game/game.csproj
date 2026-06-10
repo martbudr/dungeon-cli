@@ -8,10 +8,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="Infrastructure\Logging\" />
+      <Folder Include="Client\Controllers\" />
       <Folder Include="Logs\" />
-      <Folder Include="Models\Domain\Rules\" />
-      <Folder Include="Models\DTOs\Player\" />
     </ItemGroup>
 
 </Project>

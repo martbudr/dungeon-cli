@@ -1,0 +1,11 @@
+
+namespace game.Client.Models;
+
+public class GenericItem
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public char Symbol { get; set; }
+    
+    public string Type { get; set; }
+}
