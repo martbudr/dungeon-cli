@@ -8,8 +8,6 @@ public class JournalStatePatch : IGamePatch
 
     public void Apply(ClientGameState state)
     {
-        // Klient ustawia swoją lokalną flagę, co automatycznie 
-        // wymusi na GameRenderer narysowanie (lub schowanie) okna dziennika
-        state.IsJournalOpen = IsOpen; 
+        state.IsJournalOpen = IsOpen;
     }
 }

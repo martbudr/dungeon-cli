@@ -4,6 +4,8 @@ using game.Client.Models;
 namespace game.Shared.DTOs.Patch;
 
 [JsonDerivedType(typeof(PlayerMovedPatch), typeDiscriminator: "move")]
+[JsonDerivedType(typeof(PlayerJoinedPatch), typeDiscriminator: "player_joined")]
+[JsonDerivedType(typeof(PlayerLeftPatch), typeDiscriminator: "player_left")]
 [JsonDerivedType(typeof(PlayerDiedPatch), typeDiscriminator: "death")]
 [JsonDerivedType(typeof(ItemPickedUpPatch), typeDiscriminator: "item_picked_up")]
 [JsonDerivedType(typeof(ItemSelectionChangedPatch), typeDiscriminator: "item_selection_changed")]

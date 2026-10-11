@@ -25,6 +25,7 @@ public class GameRenderer : IDisposable,
     private readonly UiEventDispatcher uiDispatcher;
     
     private bool shouldRenderJournal = false;
+    private bool wasRenderingJournal = false;
     
     public GameRenderer(UiEventDispatcher uiDispatcher, IMessageService fileLogger, ILogService logService)
     {
@@ -53,6 +54,12 @@ public class GameRenderer : IDisposable,
         if (board == null) throw new Exception("board is null");
         if (player == null) throw new Exception("player is null");
         if (tutorialInstructions == null) throw new Exception("tutorial null");
+        
+        if (wasRenderingJournal != shouldRenderJournal)
+        {
+            Console.Clear();
+            wasRenderingJournal = shouldRenderJournal;
+        }
         
         Console.SetCursorPosition(0, 0);
         

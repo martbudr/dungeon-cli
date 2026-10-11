@@ -21,6 +21,7 @@ namespace game.Shared.Events.Core;
 [JsonDerivedType(typeof(OutOfBoundsEvent), typeDiscriminator: "OutOfBounds")]
 [JsonDerivedType(typeof(UnknownKeyEvent), typeDiscriminator: "UnknownKey")]
 [JsonDerivedType(typeof(WallCollisionEvent), typeDiscriminator: "WallCollision")]
+[JsonDerivedType(typeof(PlayerCollisionEvent), typeDiscriminator: "PlayerCollision")]
 public interface IUiEvent : IGameEvent
 {
 }

@@ -38,11 +38,13 @@ class TutorialBuilder
             new() { Condition = ShouldShowMovementTutorial, Text = "MOVEMENT: Use [W, A, S, D] to navigate." },
             new() { Condition = ShouldShowWallsTutorial, Text = "OBSTACLES: Walls [█] block your path." },
             new() { Condition = ShouldShowPickupTutorial, Text = "LOOT: Press [E] to pick up an item." },
-            new() { Condition = ShouldShowInventoryTutorial, Text = "INVENTORY: Use [UP/DOWN] to select and [Q] to drop an item." },
+            new() { Condition = ShouldShowInventoryTutorial, Text = "INVENTORY: [Up/Down] select, [G] drop." },
             new() { Condition = ShouldShowEquipmentTutorial, Text = "EQUIP: Press [1] (Left) or [2] (Right) to arm yourself." },
-            new() { Condition = ShouldShowDropTutorial, Text = "DISARM: Press [L] or [R] to unequip your current weapons." },
-            new() { Condition = ShouldShowAttackTutorial, Text = "COMBAT: Press [H] to initiate attack." },
+            new() { Condition = ShouldShowDropTutorial, Text = "UNEQUIP: [3] Left hand, [4] Right hand." },
+            new() { Condition = ShouldShowAttackTutorial, Text = "COMBAT: [Space] then [N] Normal, [B] Sneak, [M] Magic." },
             new() { Condition = ShouldShowCurrencyTutorial, Text = "TREASURE: Collect coins and gold to increase wealth." },
+            new() { Condition = () => true, Text = "JOURNAL: [J] opens; any key closes, [X] quits." },
+            new() { Condition = () => true, Text = "QUIT: [X]." },
         };
     }
 

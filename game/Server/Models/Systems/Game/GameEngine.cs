@@ -34,7 +34,8 @@ public class GameEngine
     
     public List<IGamePatch> ProcessInput(PlayerInputDto playerInput)
     {
-        var player = Context.State.Players[playerInput.PlayerId];
+        if (!Context.State.Players.TryGetValue(playerInput.PlayerId, out var player))
+            return [];
 
         var triggeredPatches = inputController.HandleInput(player, playerInput.Key);
 

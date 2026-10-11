@@ -30,7 +30,7 @@ public static class JournalRenderer
         Console.WriteLine();
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine("------------------------------------");
-        Console.WriteLine("Press any key to return to the dungeon...");
+        Console.WriteLine("Press any key to return to the dungeon; [X] quits.");
         Console.ResetColor();
     }
 

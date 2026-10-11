@@ -5,6 +5,7 @@ using game.Server.Models.Core;
 using game.Server.Models.Entities.Board;
 using game.Server.Models.Systems.Game;
 using game.Server.Services;
+using game.Shared.DTOs.Mapper;
 using game.Shared.DTOs.Patch;
 using game.Shared.Events.Dispatchers;
 using game.Shared.Events.UI;
@@ -82,12 +83,28 @@ class GameServer : IDisposable
                         case PlayerJoinCommand join:
                             engine.AddPlayer(join.Dto);
                             network.FinalizePlayerJoin(join.Connection);
+
+                            totalPatches.Add(new PlayerJoinedPatch
+                            {
+                                Player = SnapshotToDtoMapper.ToDto(context.State.Players[join.Dto.PlayerId])
+                            });
                             
                             var welcomePatches = UiEventBridge.PublishAndPatch(
                                 new GameStartedEvent(context.Theme.WelcomeMessage), 
                                 context.UiDispatcher
                             );
                             totalPatches.AddRange(welcomePatches);
+                            break;
+
+                        case PlayerLeaveCommand leave:
+                            if (context.State.Players.Remove(leave.PlayerId, out var departed))
+                            {
+                                var position = departed.Position;
+                                if (context.State.Board.Players[position.X, position.Y]?.Id == leave.PlayerId)
+                                    context.State.Board.Players[position.X, position.Y] = null;
+
+                                totalPatches.Add(new PlayerLeftPatch { PlayerId = leave.PlayerId });
+                            }
                             break;
 
                         case PlayerInputCommand input:

@@ -48,6 +48,14 @@ class MovementHandler : InputHandler
             return patches;
         }
         
+        if (board.Players[nx, ny] != null)
+        {
+            var newPatches = UiEventBridge.PublishAndPatch(new PlayerCollisionEvent(), uiDispatcher);
+            patches.AddRange(newPatches);
+
+            return patches;
+        }
+
         var tiles = player.MakeNoise(NoiseProfile.Movement, board);
         gameplayDispatcher.Publish(new NoiseEvent(player.Position.X, player.Position.Y, tiles));
         

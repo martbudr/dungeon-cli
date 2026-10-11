@@ -19,6 +19,7 @@ public class ClientGameState
     private GameplayEventDispatcher GameplayDispatcher {get; init; }
    
     public bool ShouldExit { get; set; } = false;
+    public int LocalPlayerId { get; set; }
     
     public bool IsJournalOpen { get; set; } = false;
 

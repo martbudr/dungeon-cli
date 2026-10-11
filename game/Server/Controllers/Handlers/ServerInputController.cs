@@ -27,7 +27,7 @@ public class ServerInputController
     
     private InputHandler BuildChain(Player player)
     {
-        var exitHandler = new ExitHandler();
+        var exitHandler = new ExitHandler(player.Id);
 
         InputHandler chain = exitHandler;
 
@@ -52,9 +52,9 @@ public class ServerInputController
             ConsoleKey.W or ConsoleKey.A or 
                 ConsoleKey.S or ConsoleKey.D => true,
             // Klawisz ekwipunku
-            ConsoleKey.E or ConsoleKey.D1 or ConsoleKey.D2 or ConsoleKey.R or ConsoleKey.L => true,
+            ConsoleKey.E or ConsoleKey.D1 or ConsoleKey.D2 or ConsoleKey.D3 or ConsoleKey.D4 => true,
             // Klawisz ataku/interakcji
-            ConsoleKey.H => true,
+            ConsoleKey.Spacebar => true,
             // Inne klawisze (Esc, I, J) nie kończą tury
             _ => false
         };

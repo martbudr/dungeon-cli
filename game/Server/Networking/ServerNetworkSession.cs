@@ -277,22 +277,13 @@ public class ServerNetworkSession : INetworkSession
             return;
         
         client.Close();
-        // remove from board:
-        lock (state)
-        {
-            var playerPosition = state.Players[client.PlayerId].Position;
-            state.Board.Players[playerPosition.X, playerPosition.Y] = null;
-        }
+        commandQueue.Enqueue(new PlayerLeaveCommand(client.PlayerId));
         
         lock (clients)
         {
             clients.Remove(client);
         }
         
-        if (state.Players.Remove(client.PlayerId, out _))
-        {
-            Console.WriteLine($"[SERVER] Removed Player {client.PlayerId}.");
-        }
     }
     
     public void Dispose()

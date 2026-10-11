@@ -4,8 +4,11 @@ namespace game.Shared.DTOs.Patch;
 
 public class ClientExitPatch : IGamePatch
 {
+    public int PlayerId { get; set; }
+
     public void Apply(ClientGameState state)
     {
-        state.ShouldExit = true;
+        if (state.LocalPlayerId == PlayerId)
+            state.ShouldExit = true;
     }
 }

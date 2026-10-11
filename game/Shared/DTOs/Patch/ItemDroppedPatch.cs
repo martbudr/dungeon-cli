@@ -14,7 +14,7 @@ public class ItemDroppedPatch : IGamePatch
         if (!state.Players.TryGetValue(PlayerId, out var player))
             return;
         
-        if (player.Inventory.Count < player.SelectedItem) return;
+        if (player.SelectedItem < 0 || player.SelectedItem >= player.Inventory.Count) return;
         
         // usuwanie przedmiotu
         GenericItem? itemToDrop = null;
@@ -27,8 +27,14 @@ public class ItemDroppedPatch : IGamePatch
             }
         }
         
-        if(itemToDrop == null) return;
-        
+        if (itemToDrop == null) return;
+
+        if (Board.IdxInRange(X, Y))
+        {
+            state.Board.Items[X, Y] ??= [];
+            state.Board.Items[X, Y].Add(itemToDrop);
+        }
+
         player.Inventory.Remove(itemToDrop);
     }
 }

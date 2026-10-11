@@ -32,11 +32,11 @@ class EquipmentHandler : InputHandler
                 patches.AddRange(player.Equip(player.SelectedItem, false));
                 handled = true;
                 break;
-            case ConsoleKey.L:
+            case ConsoleKey.D3:
                 patches.AddRange(player.Unequip(true));
                 handled = true;
                 break;
-            case ConsoleKey.R:
+            case ConsoleKey.D4:
                 patches.AddRange(player.Unequip(false));
                 handled = true;
                 break;

@@ -153,7 +153,10 @@ public class ClientNetworkSession : IDisposable
         GameTickUpdateDto? latest = null;
     
         while (incomingStates.TryDequeue(out var s))
-            latest = s;
+        {
+            latest ??= new GameTickUpdateDto();
+            latest.Patches.AddRange(s.Patches);
+        }
     
         return latest;
     }

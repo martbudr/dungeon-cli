@@ -47,8 +47,12 @@ public class UiListener : IEventListener<IUiEvent>, IDisposable
                 ui.Publish(new GameMessageEvent("Trying to bump into a wall.", localPlayerId));
                 break;
             
+            case PlayerCollisionEvent:
+                ui.Publish(new GameMessageEvent("You can't move onto a tile occupied by another player.", localPlayerId));
+                break;
+            
             case InvalidAttackKeyEvent:
-                ui.Publish(new GameMessageEvent("Invalid key! Press N, K, or M to attack.", localPlayerId));
+                ui.Publish(new GameMessageEvent("Attack: [N] Normal, [B] Sneak/backstab, [M] Magic", localPlayerId));
                 break;
             
             case UnknownKeyEvent u:
@@ -63,7 +67,7 @@ public class UiListener : IEventListener<IUiEvent>, IDisposable
                 break;
 
             case JournalOpenedEvent:
-                ui.Publish(new GameMessageEvent("Reading journal... Press any key to close.", localPlayerId));
+                ui.Publish(new GameMessageEvent("Reading journal... Any key closes; [X] quits.", localPlayerId));
                 break;
             
             case JournalClosedEvent:

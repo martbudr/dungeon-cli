@@ -25,7 +25,7 @@ class SelectionHandler : InputHandler
                 break;
 
             case ConsoleKey.DownArrow:
-                player.SelectedItem = Math.Min(player.SelectedItem + 1, 9);
+                player.SelectedItem = Math.Min(player.SelectedItem + 1, Math.Max(0, player.Inventory.Count - 1));
                 handled = true;
                 break;
         }

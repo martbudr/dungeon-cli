@@ -19,21 +19,41 @@ class DropHandler : InputHandler
     {
         var patches = new List<IGamePatch>();
         
-        if (key != ConsoleKey.Q)
+        if (key != ConsoleKey.G)
         {
             return base.Handle(key);
         }
         
         var itemToDrop = player.SelectedItem;
+        if (itemToDrop < 0 || itemToDrop >= player.Inventory.Count)
+        {
+            return patches;
+        }
+
+        var item = player.Inventory[itemToDrop];
         
         patches.Add(new ItemDroppedPatch 
         { 
             PlayerId = player.Id,
-            ItemId = player.Inventory[player.SelectedItem].Id,
+            ItemId = item.Id,
             X = player.Position.X,
             Y = player.Position.Y
         });
         player.Drop(itemToDrop, board.Items);
+
+        var selectedItemAfterDrop = player.Inventory.Count == 0
+            ? 0
+            : Math.Min(itemToDrop, player.Inventory.Count - 1);
+
+        if (player.SelectedItem != selectedItemAfterDrop)
+        {
+            player.SelectedItem = selectedItemAfterDrop;
+            patches.Add(new ItemSelectionChangedPatch
+            {
+                PlayerId = player.Id,
+                SelectedIndex = selectedItemAfterDrop
+            });
+        }
         
         return patches;
     }

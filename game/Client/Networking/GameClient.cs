@@ -46,6 +46,7 @@ class GameClient : IDisposable
         var (snapshot, assignment) = await network.WaitForHandshake();
 
         localPlayerId = assignment.PlayerId;
+        clientState.LocalPlayerId = localPlayerId;
         clientState.ApplySnapshot(snapshot);
         
         // finish initialization

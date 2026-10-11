@@ -1,6 +1,7 @@
 using game.Client.Models;
 using game.Models.Common.Events;
 using game.Shared.Events.Core;
+using game.Shared.Events.UI;
 
 namespace game.Shared.DTOs.Patch;
 

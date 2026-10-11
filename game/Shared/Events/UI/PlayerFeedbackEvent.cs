@@ -6,6 +6,8 @@ public record OutOfBoundsEvent : IUiEvent;
 
 public record WallCollisionEvent : IUiEvent;
 
+public record PlayerCollisionEvent : IUiEvent;
+
 public record InvalidAttackKeyEvent : IUiEvent;
 
 public record UnknownKeyEvent(ConsoleKey Key) : IUiEvent;
@@ -23,7 +25,7 @@ public enum HandType
     Both
 }
 
-public record JournalOpenedEvent : IUiEvent;
-public record JournalClosedEvent : IUiEvent;
+public record JournalOpenedEvent() : IUiEvent;
+public record JournalClosedEvent() : IUiEvent;
 
 public record ItemCannotBeEquippedEvent : IUiEvent;

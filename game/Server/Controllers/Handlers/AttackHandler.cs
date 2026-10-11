@@ -36,22 +36,22 @@ class AttackHandler : InputHandler
         
         if (!waitingForAttackKey)
         {
-            if (key == ConsoleKey.H) // klawisz inicjujący atak
+            if (key == ConsoleKey.Spacebar)
             {
                 waitingForAttackKey = true;
-                var eventToPublish = new GameMessageEvent("Choose attack type: N, K, M", player.Id);
+                var eventToPublish = new GameMessageEvent("Attack: [N] Normal, [B] Sneak/backstab, [M] Magic", player.Id);
                 var newPatches = UiEventBridge.PublishAndPatch(eventToPublish, uiDispatcher);
                 patches.AddRange(newPatches);
             }
             
-            return patches;
+            return key == ConsoleKey.Spacebar ? patches : base.Handle(key);
         }
 
-        // Jeśli jesteśmy w trybie oczekiwania, akceptujemy tylko N/K/M
+        // Attack choices use keys that do not overlap with other actions.
         IAttackHandler? attack = key switch
         {
             ConsoleKey.N => new NormalAttack(),
-            ConsoleKey.K => new SneakAttack(),
+            ConsoleKey.B => new SneakAttack(),
             ConsoleKey.M => new MagicAttack(),
             _ => null
         };
