@@ -1,7 +1,6 @@
 using game.Models.Domain.Equipment;
 using game.Models.Domain.Equipment.Weapons;
 using game.Models.Domain.Rules.Combat;
-using game.Models.Systems.Equipment;
 using game.Server.Models.Equipment;
 using game.Server.Models.Rules.Combat;
 using game.Server.Models.Systems.Equipment;

@@ -56,8 +56,7 @@ class MovementHandler : InputHandler
             return patches;
         }
 
-        var tiles = player.MakeNoise(NoiseProfile.Movement, board);
-        gameplayDispatcher.Publish(new NoiseEvent(player.Position.X, player.Position.Y, tiles));
+        player.MakeNoise(NoiseProfile.Movement, board);
         
         board.SetPlayerPosition(player, nx, ny);
         patches.Add(new PlayerMovedPatch

@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using game.Client.Networking;
-using game.Models;
 using game.Server.Networking;
+using game.Shared;
 
 namespace game.Server.Bootstrap;
 
@@ -14,7 +14,9 @@ class Program
         Console.Clear();
         
         GameConfig config;
-        string configPath = "../config.json";
+        string configPath = File.Exists("config.json")
+            ? "config.json"
+            : Path.Combine(AppContext.BaseDirectory, "config.json");
         try 
         {
             if (File.Exists(configPath))

@@ -3,6 +3,7 @@ using game.Client.Views.EventListeners;
 using game.Client.Views.Rendering;
 using game.Models;
 using game.Server.Services;
+using game.Shared;
 using game.Shared.DTOs.Input;
 using game.Shared.DTOs.Patch;
 using game.Shared.Events.Dispatchers;
@@ -72,6 +73,7 @@ class GameClient : IDisposable
                 if (update != null){
                     ApplyNetworkUpdates(update);
                 }
+                if (clientState.ShouldExit) break;
 
                 lock (stateLock)
                 {
@@ -119,7 +121,7 @@ class GameClient : IDisposable
         }
         catch (Exception ex)
         {
-            // ignored
+            Console.Error.WriteLine($"[CLIENT] {ex.Message}");
         }
         finally
         {

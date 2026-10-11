@@ -6,8 +6,8 @@ namespace game.Server.Models.Systems.Tutorial;
 
 class TutorialRule
 {
-    public Func<bool> Condition;
-    public string Text;
+    public required Func<bool> Condition;
+    public required string Text;
 }
 
 class TutorialBuilder

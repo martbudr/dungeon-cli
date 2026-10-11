@@ -1,4 +1,4 @@
-namespace game.Models;
+namespace game.Shared;
 
 public class GameConfig
 {

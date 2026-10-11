@@ -5,6 +5,7 @@ using game.Server.Models.Core;
 using game.Server.Models.Entities.Board;
 using game.Server.Models.Systems.Game;
 using game.Server.Services;
+using game.Shared;
 using game.Shared.DTOs.Mapper;
 using game.Shared.DTOs.Patch;
 using game.Shared.Events.Dispatchers;
@@ -14,7 +15,6 @@ namespace game.Server.Networking;
 
 class GameServer : IDisposable
 {
-    private GameState state;
     private readonly ServerNetworkSession network;
     private GameContext context;
 
@@ -23,7 +23,6 @@ class GameServer : IDisposable
     private readonly List<IDisposable> disposables = [];
 
     private readonly CancellationTokenSource cts = new();
-    private bool disposed;
 
     public GameServer(GameConfig config, int port)
     {

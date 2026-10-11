@@ -1,17 +1,14 @@
 using Game.Effects;
-using game.Models.Domain.Equipment;
 using game.Models.Domain.Rules.Combat;
-using game.Models.Systems.Equipment;
 using game.Server.Models.Entities.Items;
 using game.Server.Models.Entities.Player;
-using game.Server.Models.Equipment;
 using game.Server.Models.Rules.Combat;
 
 namespace game.Server.Models.Systems.Equipment.Effects;
 
 public class StrongEffect : ItemEffectDecorator, IStatModifier
 {
-    private readonly int extraDamage; // Bonus do ataku zaszyty w dekoratorze
+    private readonly int extraDamage;
 
     public StrongEffect(IItem item, int extraDamage = 3) : base(item)
     {
@@ -20,9 +17,7 @@ public class StrongEffect : ItemEffectDecorator, IStatModifier
 
     public override string Name => $"{base.Name} (Strong)";
 
-    // --- IStatModifier ---
-    // Zachowujemy to, jeśli Twój system tego wymaga, 
-    // ale to nie to wpływa na obrażenia broni w Calculate.
+    // Damage is added in Calculate rather than through the player's strength stat.
     public int Strength => 0;
     public int Dexterity => 0;
     public int Luck => 0;
@@ -31,16 +26,13 @@ public class StrongEffect : ItemEffectDecorator, IStatModifier
 
     public override AttackResult Calculate(Player player, IAttackHandler attack)
     {
-        var baseResult = InnerItem.Calculate(player, attack);
+        var baseResult = base.Calculate(player, attack);
 
         return new AttackResult 
         { 
             Damage = baseResult.Damage + extraDamage, 
-            Defense = baseResult.Defense 
+            Defense = baseResult.Defense,
+            Noise = baseResult.Noise
         };
     }
-    
-    public override IEquipStrategy? EquipStrategy => (InnerItem as IEquippable)?.EquipStrategy;
-
-   
 }

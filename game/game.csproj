@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <None Include="../config.json" Link="config.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
       <Folder Include="Client\Controllers\" />
       <Folder Include="Logs\" />
     </ItemGroup>

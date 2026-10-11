@@ -16,10 +16,10 @@ public class Player
     public int Coins { get; set; }
     public int Gold { get; set; }
     
-    public PlayerBaseStats BaseStats { get; set; }
-    public PlayerStats Stats { get; set; }
+    public PlayerBaseStats BaseStats { get; set; } = new();
+    public PlayerStats Stats { get; set; } = new();
 
-    public Equipment Equipment { get; set; }
+    public Equipment Equipment { get; set; } = new();
     public List<GenericItem> Inventory { get; set; } = [];
     public int SelectedItem { get; set; }
 

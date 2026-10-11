@@ -32,17 +32,7 @@ public static class SnapshotToDtoMapper
                 BaseStrength = baseStats.BaseStrength,
                 BaseWisdom = baseStats.BaseWisdom
             },
-            Stats = new PlayerStatsDto
-            {
-                Aggression = player.Aggression,
-                Coins = player.Coins,
-                Gold = player.Gold,
-                Dexterity = player.Dexterity,
-                Luck = player.Luck,
-                Strength = player.Strength,
-                Wisdom = player.Wisdom,
-                Health = player.Health
-            },
+            Stats = ToStatsDto(player),
             Equipment = new EquipmentSnapshotDto
             {
                 LeftHandItem =  player.LeftHandItem != null ? ToDto(player.LeftHandItem) : null,
@@ -53,6 +43,21 @@ public static class SnapshotToDtoMapper
                 Items = player.Inventory.Select(i => ToDto(i)).ToList()
             },
             SelectedItem = player.SelectedItem
+        };
+    }
+
+    public static PlayerStatsDto ToStatsDto(Player player)
+    {
+        return new PlayerStatsDto
+        {
+            Aggression = player.Aggression,
+            Coins = player.Coins,
+            Gold = player.Gold,
+            Dexterity = player.Dexterity,
+            Luck = player.Luck,
+            Strength = player.Strength,
+            Wisdom = player.Wisdom,
+            Health = player.Health
         };
     }
 

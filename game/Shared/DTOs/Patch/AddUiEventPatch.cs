@@ -7,7 +7,7 @@ namespace game.Shared.DTOs.Patch;
 
 public class AddUiEventPatch : IGamePatch
 {
-    public IUiEvent UiEvent { get; set; } 
+    public required IUiEvent UiEvent { get; set; }
 
     public void Apply(ClientGameState state)
     {

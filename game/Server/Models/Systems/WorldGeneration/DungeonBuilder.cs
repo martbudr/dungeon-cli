@@ -1,5 +1,4 @@
 using game.Models.Domain.Equipment;
-using game.Models.Systems.Equipment.Effects;
 using game.Server.Models.Core;
 using game.Server.Models.Entities;
 using game.Server.Models.Entities.Board;

@@ -17,6 +17,8 @@ class EquipmentHandler : InputHandler
     {
         var patches = new List<IGamePatch>();
         var handled = false;
+        var leftBefore = player.LeftHandItem;
+        var rightBefore = player.RightHandItem;
         
         var inventoryBefore = player.Inventory
             .Select(i => i.Id)
@@ -43,6 +45,8 @@ class EquipmentHandler : InputHandler
         }
 
         if (!handled) return base.Handle(key);
+        if (leftBefore == player.LeftHandItem && rightBefore == player.RightHandItem)
+            return patches;
         
         var inventoryAfter = player.Inventory
             .Select(i => i.Id)
@@ -71,6 +75,7 @@ class EquipmentHandler : InputHandler
         patches.Add(new EquipmentPatch
         {
             PlayerId = player.Id,
+            Stats = SnapshotToDtoMapper.ToStatsDto(player),
             LeftHandItem = player.LeftHandItem == null
                 ? null
                 : SnapshotToDtoMapper.ToDto(player.LeftHandItem),

@@ -1,7 +1,6 @@
 using Game.Effects;
 using game.Models.Domain.Equipment;
 using game.Models.Domain.Rules.Combat;
-using game.Models.Systems.Equipment;
 using game.Server.Models.Entities.Items;
 using game.Server.Models.Entities.Player;
 using game.Server.Models.Equipment;

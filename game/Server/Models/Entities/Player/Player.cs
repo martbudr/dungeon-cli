@@ -163,7 +163,7 @@ public class Player : IDamageable
         }
         
         var leftStats = (equipment.LeftHandItem != null) 
-            ? equipment.LeftHandItem?.Calculate(this, attack) 
+            ? equipment.LeftHandItem.Calculate(this, attack)
             :  new AttackResult();
         
         var rightStats = (equipment.RightHandItem != null && equipment.RightHandItem != equipment.LeftHandItem) 

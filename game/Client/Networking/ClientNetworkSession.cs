@@ -18,9 +18,10 @@ public class ClientNetworkSession : IDisposable
     private readonly ConcurrentQueue<GameTickUpdateDto> incomingStates = new();
     private readonly CancellationTokenSource cts = new();
 
-    private readonly TaskCompletionSource<GameSnapshotDto> snapshotTcs = new();
-    private readonly TaskCompletionSource<PlayerAssignmentDto> assignmentTcs = new();
-    
+    private readonly TaskCompletionSource<GameSnapshotDto> snapshotTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly TaskCompletionSource<PlayerAssignmentDto> assignmentTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private int disconnected;
+    private int disposed;
     private Task? receiveTask;
 
     public ClientNetworkSession(string ip, int port)
@@ -87,20 +88,17 @@ public class ClientNetworkSession : IDisposable
                 switch (msg.Type)
                 {
                     case "snapshot":
-                        snapshotTcs.TrySetResult(
-                            SafeDeserialize<GameSnapshotDto>(msg.Data)!
-                        );
+                        snapshotTcs.TrySetResult(JsonSerializer.Deserialize<GameSnapshotDto>(msg.Data)
+                            ?? throw new JsonException("Missing initial snapshot"));
                         break;
 
                     case "player_assigned":
-                        assignmentTcs.TrySetResult(
-                            SafeDeserialize<PlayerAssignmentDto>(msg.Data)!
-                        );
+                        assignmentTcs.TrySetResult(JsonSerializer.Deserialize<PlayerAssignmentDto>(msg.Data)
+                            ?? throw new JsonException("Missing player assignment"));
                         break;
                     
                     case "server_shutdown":
-                        cts.Cancel();
-                        break;
+                        return;
 
                     case "state":
                         var update = SafeDeserialize<GameTickUpdateDto>(msg.Data);
@@ -122,6 +120,19 @@ public class ClientNetworkSession : IDisposable
         {
             Console.WriteLine($"[CLIENT] ReceiveLoop unexpected crash: {ex}");
         }
+        finally
+        {
+            MarkDisconnected();
+        }
+    }
+
+    private void MarkDisconnected()
+    {
+        if (Interlocked.Exchange(ref disconnected, 1) != 0) return;
+        snapshotTcs.TrySetException(new IOException("Server disconnected during handshake"));
+        assignmentTcs.TrySetException(new IOException("Server disconnected during handshake"));
+        incomingStates.Enqueue(new GameTickUpdateDto { Patches = [new ServerShutdownPatch()] });
+        client.Close();
     }
 
     private T? SafeDeserialize<T>(string data)
@@ -139,14 +150,15 @@ public class ClientNetworkSession : IDisposable
 
     public async Task<(GameSnapshotDto Snapshot, PlayerAssignmentDto Assignment)> WaitForHandshake()
     {
-        var snapshot = await WaitForInitialSnapshot();
-        var assignment = await WaitForPlayerAssignment();
+        await Task.WhenAll(WaitForInitialSnapshot(), WaitForPlayerAssignment());
+        var snapshot = await snapshotTcs.Task;
+        var assignment = await assignmentTcs.Task;
 
         return (snapshot, assignment);
     }
     
-    public Task<GameSnapshotDto> WaitForInitialSnapshot() => snapshotTcs.Task;
-    public Task<PlayerAssignmentDto> WaitForPlayerAssignment() => assignmentTcs.Task;
+    private Task<GameSnapshotDto> WaitForInitialSnapshot() => snapshotTcs.Task;
+    private Task<PlayerAssignmentDto> WaitForPlayerAssignment() => assignmentTcs.Task;
     
     public GameTickUpdateDto? GetLatestState()
     {
@@ -185,19 +197,29 @@ public class ClientNetworkSession : IDisposable
         catch (Exception ex)
         {
             Console.WriteLine($"[CLIENT] Send failed: {ex.Message}");
+            MarkDisconnected();
         }
     }
 
     public void Dispose()
     {
+        if (Interlocked.Exchange(ref disposed, 1) != 0) return;
         cts.Cancel();
+        MarkDisconnected();
 
-        try { client.Close(); } catch { }
+        try { client.Close(); }
+        catch
+        {
+            // ignored
+        }
 
         reader.Dispose();
         writer.Dispose();
         client.Dispose();
 
-        cts.Dispose();
+        if (receiveTask == null)
+            cts.Dispose();
+        else
+            _ = receiveTask.ContinueWith(_ => cts.Dispose(), TaskScheduler.Default);
     }
 }

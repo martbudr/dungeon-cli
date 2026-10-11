@@ -2,6 +2,7 @@ using game.Models;
 using game.Models.Common.Events;
 using game.Server.Models.Systems.Tutorial;
 using game.Server.Services;
+using game.Shared;
 using game.Shared.DTOs.Mapper;
 using game.Shared.DTOs.Snapshot;
 using game.Shared.Events.Dispatchers;
@@ -10,10 +11,15 @@ namespace game.Client.Models;
 
 public class ClientGameState
 {
-    public Board Board { get; set; }
-    public Dictionary<int, Player> Players { get; set; }
+    private Board? board;
+    public Board Board
+    {
+        get => board ?? throw new InvalidOperationException("Initial snapshot has not been applied");
+        set => board = value;
+    }
+    public Dictionary<int, Player> Players { get; set; } = [];
     public TutorialSystem TutorialSystem { get; }
-    public List<string> CurrentTutorial { get; private set; }
+    public List<string> CurrentTutorial { get; private set; } = [];
     public GameLogger Logger { get; init; } 
     public UiEventDispatcher UiDispatcher {get; init; }
     private GameplayEventDispatcher GameplayDispatcher {get; init; }

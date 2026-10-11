@@ -40,7 +40,7 @@ public class GameEngine
 
         var triggeredPatches = inputController.HandleInput(player, playerInput.Key);
 
-        if (player.IsAlive && inputController.EndsTurn(playerInput.Key))
+        if (player.IsAlive && inputController.EndsTurn(triggeredPatches))
         {
             enemies.Process(Context);
         }

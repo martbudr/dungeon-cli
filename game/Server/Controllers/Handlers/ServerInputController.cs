@@ -44,19 +44,9 @@ public class ServerInputController
         return chain;
     }
     
-    public bool EndsTurn(ConsoleKey key)
+    public bool EndsTurn(IEnumerable<IGamePatch> patches)
     {
-        return key switch
-        {
-            // Klawisze ruchu
-            ConsoleKey.W or ConsoleKey.A or 
-                ConsoleKey.S or ConsoleKey.D => true,
-            // Klawisz ekwipunku
-            ConsoleKey.E or ConsoleKey.D1 or ConsoleKey.D2 or ConsoleKey.D3 or ConsoleKey.D4 => true,
-            // Klawisz ataku/interakcji
-            ConsoleKey.Spacebar => true,
-            // Inne klawisze (Esc, I, J) nie kończą tury
-            _ => false
-        };
+        return patches.Any(patch => patch is PlayerMovedPatch or ItemPickedUpPatch
+            or EquipmentPatch or ItemDroppedPatch or CombatUpdatePatch);
     }
 }
