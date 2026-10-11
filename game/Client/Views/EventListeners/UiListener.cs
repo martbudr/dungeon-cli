@@ -10,12 +10,10 @@ namespace game.Client.Views.EventListeners;
 public class UiListener : IEventListener<IUiEvent>, IDisposable
 {
     private readonly UiEventDispatcher ui;
-    private readonly int localPlayerId;
 
-    public UiListener(UiEventDispatcher ui, int localPlayerId)
+    public UiListener(UiEventDispatcher ui)
     {
         this.ui = ui;
-        this.localPlayerId = localPlayerId;
         ui.Subscribe(this);
     }
     
@@ -40,38 +38,38 @@ public class UiListener : IEventListener<IUiEvent>, IDisposable
                 break;
             
             case OutOfBoundsEvent:
-                ui.Publish(new GameMessageEvent("Trying to go outside the map.", localPlayerId));
+                ui.Publish(new GameMessageEvent("Trying to go outside the map."));
                 break;
             
             case WallCollisionEvent:
-                ui.Publish(new GameMessageEvent("Trying to bump into a wall.", localPlayerId));
+                ui.Publish(new GameMessageEvent("Trying to bump into a wall."));
                 break;
             
             case PlayerCollisionEvent:
-                ui.Publish(new GameMessageEvent("You can't move onto a tile occupied by another player.", localPlayerId));
+                ui.Publish(new GameMessageEvent("You can't move onto a tile occupied by another player."));
                 break;
             
             case InvalidAttackKeyEvent:
-                ui.Publish(new GameMessageEvent("Attack: [N] Normal, [B] Sneak/backstab, [M] Magic", localPlayerId));
+                ui.Publish(new GameMessageEvent("Attack: [N] Normal, [B] Sneak/backstab, [M] Magic"));
                 break;
             
             case UnknownKeyEvent u:
-                ui.Publish(new GameMessageEvent($"The key {u.Key} does nothing here.", localPlayerId));
+                ui.Publish(new GameMessageEvent($"The key {u.Key} does nothing here."));
                 break;
             
             case GameStartedEvent g:
-                ui.Publish(new GameMessageEvent(g.WelcomeMessage, localPlayerId));
+                ui.Publish(new GameMessageEvent(g.WelcomeMessage));
                 break;
             case ItemEquippedEvent i:
-                ui.Publish(new GameMessageEvent($"You equipped the {i.ItemName}.", localPlayerId));
+                ui.Publish(new GameMessageEvent($"You equipped the {i.ItemName}."));
                 break;
 
             case JournalOpenedEvent:
-                ui.Publish(new GameMessageEvent("Reading journal... Any key closes; [X] quits.", localPlayerId));
+                ui.Publish(new GameMessageEvent("Reading journal... Any key closes; [X] quits."));
                 break;
             
             case JournalClosedEvent:
-                ui.Publish(new GameMessageEvent("Closed journal.", localPlayerId));
+                ui.Publish(new GameMessageEvent("Closed journal."));
                 break;
 
             case ItemEquippedInHandEvent i:
@@ -84,13 +82,12 @@ public class UiListener : IEventListener<IUiEvent>, IDisposable
                 };
 
                 ui.Publish(new GameMessageEvent(
-                    $"You take the {i.ItemName} in your {handText}.",
-                    localPlayerId
+                    $"You take the {i.ItemName} in your {handText}."
                 ));
                 break;
 
             case ItemCannotBeEquippedEvent:
-                ui.Publish(new GameMessageEvent("This item cannot be equipped.", localPlayerId));
+                ui.Publish(new GameMessageEvent("This item cannot be equipped."));
                 break;
         }
     }
@@ -102,8 +99,7 @@ public class UiListener : IEventListener<IUiEvent>, IDisposable
             ui.Publish(new GameMessageEvent(
                 a.IsPlayer
                     ? $"You use {a.AttackName} and deal {a.Damage} damage!"
-                    : $"{a.Name} attacks and deals {a.Damage} damage.",
-                localPlayerId
+                    : $"{a.Name} attacks and deals {a.Damage} damage."
                 ));
         }
     }
@@ -115,8 +111,7 @@ public class UiListener : IEventListener<IUiEvent>, IDisposable
             ui.Publish(new GameMessageEvent(
                 e.IsPlayer
                     ? $"You block the attack! (Armor: {e.Blocked})"
-                    : $"{e.Name} blocks the attack! (Armor: {e.Blocked})",
-                localPlayerId
+                    : $"{e.Name} blocks the attack! (Armor: {e.Blocked})"
             ));
             return;
         }
@@ -124,8 +119,7 @@ public class UiListener : IEventListener<IUiEvent>, IDisposable
         ui.Publish(new GameMessageEvent(
             e.IsPlayer
                 ? $"You take {e.Damage} damage{(e.Blocked > 0 ? $" ({e.Blocked} blocked)" : "")}."
-                : $"{e.Name} takes {e.Damage} damage{(e.Blocked > 0 ? $" ({e.Blocked} blocked)" : "")}.",
-            localPlayerId
+                : $"{e.Name} takes {e.Damage} damage{(e.Blocked > 0 ? $" ({e.Blocked} blocked)" : "")}."
         ));
     }
     

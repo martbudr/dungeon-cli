@@ -18,13 +18,11 @@ public class LogService : IEventListener<GameMessageEvent>, ILogService
     
     private readonly IMessageService fileLogger;
     private readonly UiEventDispatcher uiDispatcher;
-    private readonly int localPlayerId;
     
-    public LogService(UiEventDispatcher uiDispatcher, IMessageService fileLogger, int localPlayerId)
+    public LogService(UiEventDispatcher uiDispatcher, IMessageService fileLogger)
     {
         this.uiDispatcher = uiDispatcher;
         this.fileLogger = fileLogger;
-        this.localPlayerId = localPlayerId;
 
         // Subskrypcja na zdarzenia
         this.uiDispatcher.Subscribe(this);
@@ -32,12 +30,6 @@ public class LogService : IEventListener<GameMessageEvent>, ILogService
     
     public void Handle(GameMessageEvent gameEvent)
     {
-        // 1. Filtrowanie multiplayer – odrzucamy logi przeznaczone dla innych graczy
-        if (gameEvent.TargetPlayerId.HasValue && gameEvent.TargetPlayerId.Value != localPlayerId)
-        {
-            return;
-        }
-        
         var formattedMessage = gameEvent.FormattedMessage;
         
         fullHistory.Add(formattedMessage);

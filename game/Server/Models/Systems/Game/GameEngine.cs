@@ -32,10 +32,11 @@ public class GameEngine
         EnemyDeathSystem = new EnemyDeathSystem(Context.State.Board.GetAllEnemies(), Context.GameplayDispatcher);
     }
     
-    public List<IGamePatch> ProcessInput(PlayerInputDto playerInput)
+    public PlayerActionResult ProcessInput(PlayerInputDto playerInput)
     {
+        var result = new PlayerActionResult();
         if (!Context.State.Players.TryGetValue(playerInput.PlayerId, out var player))
-            return [];
+            return result;
 
         var triggeredPatches = inputController.HandleInput(player, playerInput.Key);
 
@@ -44,7 +45,10 @@ public class GameEngine
             enemies.Process(Context);
         }
 
-        return triggeredPatches;
+        result.AddRange(triggeredPatches);
+        result.AddRange(Context.Patches);
+        Context.Patches.Clear();
+        return result;
     }
     
     public void AddPlayer(PlayerJoinDto join)

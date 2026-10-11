@@ -6,12 +6,10 @@ public class GameMessageEvent : IUiEvent
 {
     public string Message { get; }
     public string FormattedMessage { get; }
-    public int? TargetPlayerId { get; }
 
-    public GameMessageEvent(string message, int? targetPlayerId = null)
+    public GameMessageEvent(string message)
     {
         Message = message;
         FormattedMessage = $"[{DateTime.Now:HH:mm:ss}] {message}";
-        TargetPlayerId = targetPlayerId;
     }
 }

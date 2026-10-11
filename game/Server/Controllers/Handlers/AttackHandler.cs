@@ -39,7 +39,7 @@ class AttackHandler : InputHandler
             if (key == ConsoleKey.Spacebar)
             {
                 waitingForAttackKey = true;
-                var eventToPublish = new GameMessageEvent("Attack: [N] Normal, [B] Sneak/backstab, [M] Magic", player.Id);
+                var eventToPublish = new GameMessageEvent("Attack: [N] Normal, [B] Sneak/backstab, [M] Magic");
                 var newPatches = UiEventBridge.PublishAndPatch(eventToPublish, uiDispatcher);
                 patches.AddRange(newPatches);
             }

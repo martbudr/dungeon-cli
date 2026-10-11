@@ -146,8 +146,11 @@ public class ServerNetworkSession : INetworkSession
 
                     case "input":
                         var dto = JsonSerializer.Deserialize<PlayerInputDto>(msg.Data);
-                        if (dto != null)
-                            commandQueue.Enqueue(new PlayerInputCommand(dto));
+                        if (dto != null && client.HandshakeComplete)
+                        {
+                            dto.PlayerId = client.PlayerId;
+                            commandQueue.Enqueue(new PlayerInputCommand(dto, client));
+                        }
                         break;
                 }
             }
@@ -219,6 +222,17 @@ public class ServerNetworkSession : INetworkSession
         }
     }
     
+    public void SendTo(ClientConnection client, GameTickUpdateDto update)
+    {
+        if (update.Patches.Count == 0) return;
+
+        Send(client, new NetMessage
+        {
+            Type = "state",
+            Data = JsonSerializer.Serialize(update)
+        });
+    }
+
     public void Broadcast(GameTickUpdateDto update)
     {
         if (update.Patches.Count == 0) return; // Po co wysyłać puste paczki

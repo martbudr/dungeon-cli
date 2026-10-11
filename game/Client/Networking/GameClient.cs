@@ -52,10 +52,10 @@ class GameClient : IDisposable
         // finish initialization
         lock (stateLock)
         {
-            logService = new LogService(uiDispatcher, clientState.Logger, localPlayerId);
+            logService = new LogService(uiDispatcher, clientState.Logger);
         }
         
-        var uiListener = new UiListener(uiDispatcher, localPlayerId);
+        var uiListener = new UiListener(uiDispatcher);
         disposables.Add(uiListener);
         
         renderer = new GameRenderer(uiDispatcher, clientState.Logger, logService);

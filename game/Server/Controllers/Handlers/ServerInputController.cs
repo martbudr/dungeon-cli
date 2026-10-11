@@ -27,7 +27,7 @@ public class ServerInputController
     
     private InputHandler BuildChain(Player player)
     {
-        var exitHandler = new ExitHandler(player.Id);
+        var exitHandler = new ExitHandler();
 
         InputHandler chain = exitHandler;
 

@@ -76,7 +76,7 @@ class GameServer : IDisposable
             {
                 List<IGamePatch> totalPatches = [];
                 
-                while (network.TryDequeueCommand() is IGameCommand cmd)
+                while (network.TryDequeueCommand() is { } cmd)
                 {
                     switch (cmd)
                     {
@@ -93,12 +93,13 @@ class GameServer : IDisposable
                                 new GameStartedEvent(context.Theme.WelcomeMessage), 
                                 context.UiDispatcher
                             );
-                            totalPatches.AddRange(welcomePatches);
+                            network.SendTo(join.Connection, new GameTickUpdateDto { Patches = welcomePatches });
                             break;
 
                         case PlayerLeaveCommand leave:
                             if (context.State.Players.Remove(leave.PlayerId, out var departed))
                             {
+                                Console.WriteLine($"[SERVER] {departed.Name} has left the game.");
                                 var position = departed.Position;
                                 if (context.State.Board.Players[position.X, position.Y]?.Id == leave.PlayerId)
                                     context.State.Board.Players[position.X, position.Y] = null;
@@ -108,7 +109,9 @@ class GameServer : IDisposable
                             break;
 
                         case PlayerInputCommand input:
-                            totalPatches.AddRange(engine.ProcessInput(input.Dto));
+                            var result = engine.ProcessInput(input.Dto);
+                            totalPatches.AddRange(result.SharedPatches);
+                            network.SendTo(input.Connection, new GameTickUpdateDto { Patches = result.PrivatePatches });
                             break;
                     }
                 }
